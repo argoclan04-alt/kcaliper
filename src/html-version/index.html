@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weight Tracker - ARGO System</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        background: 'var(--background)',
+                        foreground: 'var(--foreground)',
+                        primary: 'var(--primary)',
+                        'primary-foreground': 'var(--primary-foreground)',
+                        secondary: 'var(--secondary)',
+                        'secondary-foreground': 'var(--secondary-foreground)',
+                        muted: 'var(--muted)',
+                        'muted-foreground': 'var(--muted-foreground)',
+                        accent: 'var(--accent)',
+                        'accent-foreground': 'var(--accent-foreground)',
+                        destructive: 'var(--destructive)',
+                        border: 'var(--border)',
+                        input: 'var(--input)',
+                        ring: 'var(--ring)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    
+    <!-- Day.js for date handling -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --font-size: 16px;
+            --background: #ffffff;
+            --foreground: rgb(from oklch(0.145 0 0) r g b);
+            --card: #ffffff;
+            --card-foreground: rgb(from oklch(0.145 0 0) r g b);
+            --popover: rgb(from oklch(1 0 0) r g b);
+            --popover-foreground: rgb(from oklch(0.145 0 0) r g b);
+            --primary: #030213;
+            --primary-foreground: rgb(from oklch(1 0 0) r g b);
+            --secondary: rgb(from oklch(0.95 0.0058 264.53) r g b);
+            --secondary-foreground: #030213;
+            --muted: #ececf0;
+            --muted-foreground: #717182;
+            --accent: #e9ebef;
+            --accent-foreground: #030213;
+            --destructive: #d4183d;
+            --destructive-foreground: #ffffff;
+            --border: rgba(0, 0, 0, 0.1);
+            --input: transparent;
+            --input-background: #f3f3f5;
+            --switch-background: #cbced4;
+            --ring: rgb(from oklch(0.708 0 0) r g b);
+            --radius: 0.625rem;
+        }
+
+        .dark {
+            --background: rgb(from oklch(0.145 0 0) r g b);
+            --foreground: rgb(from oklch(0.985 0 0) r g b);
+            --card: rgb(from oklch(0.145 0 0) r g b);
+            --card-foreground: rgb(from oklch(0.985 0 0) r g b);
+            --popover: rgb(from oklch(0.145 0 0) r g b);
+            --popover-foreground: rgb(from oklch(0.985 0 0) r g b);
+            --primary: rgb(from oklch(0.985 0 0) r g b);
+            --primary-foreground: rgb(from oklch(0.205 0 0) r g b);
+            --secondary: rgb(from oklch(0.269 0 0) r g b);
+            --secondary-foreground: rgb(from oklch(0.985 0 0) r g b);
+            --muted: rgb(from oklch(0.269 0 0) r g b);
+            --muted-foreground: rgb(from oklch(0.708 0 0) r g b);
+            --accent: rgb(from oklch(0.269 0 0) r g b);
+            --accent-foreground: rgb(from oklch(0.985 0 0) r g b);
+            --destructive: rgb(from oklch(0.396 0.141 25.723) r g b);
+            --destructive-foreground: rgb(from oklch(0.637 0.237 25.331) r g b);
+            --border: rgb(from oklch(0.269 0 0) r g b);
+            --input: rgb(from oklch(0.269 0 0) r g b);
+            --ring: rgb(from oklch(0.439 0 0) r g b);
+        }
+
+        * {
+            border-color: var(--border);
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            font-size: var(--font-size);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.5;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        h2 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        h3 {
+            font-size: 1.125rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        h4, button, label {
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        p, input, textarea {
+            font-size: 1rem;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        /* Custom scrollbar for dark mode */
+        .dark ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .dark ::-webkit-scrollbar-track {
+            background: var(--muted);
+        }
+
+        .dark ::-webkit-scrollbar-thumb {
+            background: var(--muted-foreground);
+            border-radius: 5px;
+        }
+
+        /* Animation for theme toggle */
+        .theme-transition {
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Toast notification styles */
+        .toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            max-width: 350px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Modal backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
+
+        /* Loading spinner */
+        .spinner {
+            border: 3px solid var(--muted);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Pulse animation for alerts */
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Responsive utilities */
+        .hide-mobile {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .hide-mobile {
+                display: none;
+            }
+        }
+
+        .show-mobile {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .show-mobile {
+                display: inline-flex;
+            }
+        }
+
+        /* Floating notification button animations */
+        .floating-btn-hide {
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+
+        .floating-btn-show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Notification panel slide animations */
+        .notification-panel-open {
+            transform: translateX(0) !important;
+        }
+
+        .notification-panel-close {
+            transform: translateX(100%) !important;
+        }
+
+        /* Swipe gesture styles */
+        .swipe-indicator {
+            position: absolute;
+            top: 50%;
+            left: -40px;
+            transform: translateY(-50%);
+            opacity: 0;
+            transition: opacity 0.3s, left 0.3s;
+        }
+
+        .swiping .swipe-indicator {
+            opacity: 1;
+            left: -20px;
+        }
+
+        /* Date input calendar icon fix */
+        input[type="date"] {
+            position: relative;
+            color-scheme: light;
+        }
+
+        .dark input[type="date"] {
+            color-scheme: dark;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.8;
+            filter: invert(0);
+        }
+
+        .dark input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.9;
+        }
+
+        input[type="date"]:hover::-webkit-calendar-picker-indicator {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="min-h-screen">
+        <!-- User Switcher (Top Bar) -->
+        <div id="user-switcher" class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+            <!-- User switcher will be rendered here -->
+        </div>
+
+        <!-- Floating Notifications Button (Coach only) -->
+        <button 
+            id="floating-notifications-btn"
+            class="fixed top-20 right-4 z-40 bg-white dark:bg-gray-800 shadow-lg rounded-full p-3 border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-xl relative"
+            onclick="toggleNotificationsPanel()"
+            style="display: none;"
+        >
+            <i data-lucide="bell" class="w-6 h-6 text-gray-700 dark:text-gray-300"></i>
+            <span id="notification-badge" class="hidden absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
+        </button>
+
+        <!-- Notifications Panel (Full Screen) -->
+        <div 
+            id="notifications-panel"
+            class="fixed inset-0 z-50 bg-white dark:bg-gray-900 transform translate-x-full transition-transform duration-300"
+            style="display: none;"
+        >
+            <!-- Notifications content will be rendered here -->
+        </div>
+
+        <!-- Main Content -->
+        <div class="container mx-auto px-4 py-6">
+            <div id="main-content">
+                <!-- Dashboard content will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Container -->
+    <div id="modal-container"></div>
+
+    <!-- JavaScript Files -->
+    <script src="./assets/js/utils.js"></script>
+    <script src="./assets/js/calculations.js"></script>
+    <script src="./assets/js/state.js"></script>
+    <script src="./assets/js/api.js"></script>
+    <script src="./assets/js/theme.js"></script>
+    <script src="./assets/js/ui.js"></script>
+    <script src="./assets/js/components.js"></script>
+    <script src="./assets/js/app.js"></script>
+
+    <script>
+        // Initialize Lucide icons after DOM loads
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>

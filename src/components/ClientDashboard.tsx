@@ -1,0 +1,252 @@
+import { useEffect } from 'react';
+import { Client } from '../types/weight-tracker';
+import { AddWeightForm } from './AddWeightForm';
+import { WeightChart } from './WeightChart';
+import { WeightEntryTable } from './WeightEntryTable';
+import { ClientNotifications } from './ClientNotifications';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { calculateMovingAverage } from '../utils/weight-calculations';
+import { Scale, TrendingDown, TrendingUp, Target, Award } from 'lucide-react';
+import { showAchievementToast } from './AchievementToast';
+
+interface ClientDashboardProps {
+  client: Client;
+  onAddWeight: (weight: number, date: string, notes: string) => void;
+  onUpdateEntry: (entryId: string, updates: any) => void;
+  loading: boolean;
+  unreadAlerts?: any[];
+  onDeclinePhotoRequest?: (requestId: string) => void;
+}
+
+export function ClientDashboard({ client, onAddWeight, onUpdateEntry, loading, unreadAlerts = [], onDeclinePhotoRequest }: ClientDashboardProps) {
+  const movingAverage = calculateMovingAverage(client.weightEntries, 7);
+  const latestEntry = client.weightEntries
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  
+  const lowestWeight = client.weightEntries.reduce((min, entry) => 
+    entry.weight < min ? entry.weight : min, Infinity
+  );
+  
+  const highestWeight = client.weightEntries.reduce((max, entry) => 
+    entry.weight > max ? entry.weight : max, -Infinity
+  );
+
+  // Check for achievements when latest entry changes
+  useEffect(() => {
+    if (latestEntry) {
+      // Check for new lowest
+      if (latestEntry.isLowest) {
+        showAchievementToast({ 
+          type: 'lowest', 
+          weight: latestEntry.weight, 
+          unit: client.unit 
+        });
+      }
+      
+      // Check for new highest
+      if (latestEntry.isHighest) {
+        showAchievementToast({ 
+          type: 'highest', 
+          weight: latestEntry.weight, 
+          unit: client.unit 
+        });
+      }
+      
+      // Check for milestone achievement
+      if (client.milestone && !client.milestoneAchieved) {
+        const milestoneReached = client.targetWeeklyRate < 0 
+          ? latestEntry.weight <= client.milestone
+          : latestEntry.weight >= client.milestone;
+          
+        if (milestoneReached) {
+          showAchievementToast({ 
+            type: 'milestone', 
+            weight: client.milestone, 
+            unit: client.unit 
+          });
+        }
+      }
+    }
+  }, [latestEntry?.id]);
+
+  const getTargetRateDisplay = (rate: number) => {
+    if (rate > 0) return `+${rate} ${client.unit}/week (Gaining)`;
+    if (rate < 0) return `${rate} ${client.unit}/week (Losing)`;
+    return `${rate} ${client.unit}/week (Maintaining)`;
+  };
+
+  const getWeeklyRateColor = (rate: number) => {
+    if (rate > 0) return 'text-red-600 bg-red-50';
+    if (rate < 0) return 'text-green-600 bg-green-50';
+    return 'text-gray-600 bg-gray-50';
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="text-center">
+        <h1 className="text-2xl font-semibold mb-2">Weight Tracker</h1>
+        <p className="text-gray-600">Track your progress and stay consistent</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Scale className="w-8 h-8 text-blue-600" />
+              <div>
+                <p className="text-sm text-gray-600">Current Weight</p>
+                <p className="text-xl font-semibold">
+                  {latestEntry ? `${latestEntry.weight} ${client.unit}` : 'No data'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Target className="w-8 h-8 text-purple-600" />
+              <div>
+                <p className="text-sm text-gray-600">7-Day Average</p>
+                <p className="text-xl font-semibold">
+                  {client.weightEntries.length > 0 ? `${movingAverage.toFixed(1)} ${client.unit}` : 'No data'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <TrendingDown className="w-8 h-8 text-green-600" />
+              <div>
+                <p className="text-sm text-gray-600">Lowest Weight</p>
+                <p className="text-xl font-semibold">
+                  {client.weightEntries.length > 0 ? `${lowestWeight.toFixed(1)} ${client.unit}` : 'No data'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              {client.milestone ? (
+                <>
+                  <Award className="w-8 h-8 text-yellow-600" />
+                  <div>
+                    <p className="text-sm text-gray-600">Milestone</p>
+                    <p className="text-xl font-semibold">
+                      {client.milestone.toFixed(1)} {client.unit}
+                      {client.milestoneAchieved && ' ✓'}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="w-8 h-8 text-red-600" />
+                  <div>
+                    <p className="text-sm text-gray-600">Highest Weight</p>
+                    <p className="text-xl font-semibold">
+                      {client.weightEntries.length > 0 ? `${highestWeight.toFixed(1)} ${client.unit}` : 'No data'}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Current Progress */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Current Progress</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Target Rate:</span>
+              <Badge variant="outline">
+                {getTargetRateDisplay(client.targetWeeklyRate)}
+              </Badge>
+            </div>
+            {latestEntry?.weeklyRate !== undefined && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">Current Rate:</span>
+                <Badge className={getWeeklyRateColor(latestEntry.weeklyRate)}>
+                  {latestEntry.weeklyRate > 0 ? '+' : ''}{latestEntry.weeklyRate} {client.unit}/week
+                </Badge>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Add Weight Form */}
+      <div className="max-w-md mx-auto">
+        <AddWeightForm
+          unit={client.unit}
+          onSubmit={onAddWeight}
+          loading={loading}
+          existingDates={client.weightEntries.map(entry => entry.date)}
+        />
+      </div>
+
+      {/* Notifications */}
+      {client.notifications && client.notifications.length > 0 && (
+        <ClientNotifications
+          notifications={client.notifications}
+          onMarkAsRead={(notifId) => {
+            // This will be handled by the parent
+          }}
+        />
+      )}
+
+      {/* Weight Chart */}
+      {client.weightEntries.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Weight Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <WeightChart 
+              entries={client.weightEntries} 
+              unit={client.unit}
+              showMovingAverage={true}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Weight History */}
+      {client.weightEntries.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Weight History</CardTitle>
+          </CardHeader>
+          <CardContent className="md:px-6 px-0">
+            <WeightEntryTable
+              entries={client.weightEntries}
+              unit={client.unit}
+              canEdit={true}
+              onUpdateEntry={onUpdateEntry}
+              showCoachControls={false}
+              showMovingAverage={client.showMovingAverage !== false}
+              nutritionData={client.nutritionData || []}
+              targetWeeklyRate={client.targetWeeklyRate}
+              unreadAlerts={unreadAlerts}
+              physiquePhotos={client.physiquePhotos}
+            />
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
