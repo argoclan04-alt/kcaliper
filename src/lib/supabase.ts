@@ -8,6 +8,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseAnonKey || ''
+  supabaseUrl || 'https://mockprojects.supabase.co',
+  supabaseAnonKey || 'mock_key_to_prevent_client_crash'
 );
