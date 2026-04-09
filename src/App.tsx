@@ -11,6 +11,7 @@ import { Dialog, DialogContent } from './components/ui/dialog';
 import { BookOpen, Loader2, ShieldCheck } from 'lucide-react';
 import { SplashScreen } from './components/SplashScreen';
 import { AthleteEmptyState } from './components/AthleteEmptyState';
+import { CaliBotResponse } from './components/CaliBotResponse';
 
 import { LandingPage } from './components/LandingPage';
 import { CoachLandingPage } from './components/CoachLandingPage';
@@ -105,7 +106,9 @@ export default function App() {
     getAvailableUsers,
     joinCoach,
     getClientById,
-    getCurrentClient
+    getCurrentClient,
+    latestAnalysis,
+    setLatestAnalysis
   } = useWeightTracker();
 
   const handleAddWeight = (weight: number, date: string, notes: string) => {
@@ -247,6 +250,11 @@ export default function App() {
                 )}
             </>
           )}
+          
+          <CaliBotResponse 
+            analysis={latestAnalysis} 
+            onClose={() => setLatestAnalysis(null)} 
+          />
         </div>
         
         <Toaster position="top-right" />

@@ -7,12 +7,15 @@ import { estebanCoach, estebanAlerts, estebanUsers } from '../utils/mock-data-es
 
 // Helper for UI-friendly IDs and formatting preserved from calculations
 import { recalculateAllWeeklyRates, findLowestAndHighestWeights, checkRateDeviation } from '../utils/weight-calculations';
+import { CaliBotEngine } from '../lib/calibot/engine';
+import { CaliBotAnalysis } from '../lib/calibot/types';
 
 export function useWeightTracker() {
   const [coach, setCoach] = useState<Coach | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [latestAnalysis, setLatestAnalysis] = useState<CaliBotAnalysis | null>(null);
   const isMockMode = useRef<boolean>(false);
 
   // Load real data from Supabase on mount
@@ -236,7 +239,15 @@ export function useWeightTracker() {
     if (error) {
       console.error('Error adding weight entry:', error);
     } else {
+      const { data: updatedClients } = await supabase.from('client_settings').select('*').eq('id', clientId).single(); // Just for context
       await refreshClientData(clientId);
+      
+      // Post-refresh Analysis
+      const updatedClient = coach?.clients.find(c => c.id === clientId);
+      if (updatedClient) {
+        const analysis = CaliBotEngine.analyzeProgress(updatedClient, { ...entry, id: 'temp' } as any);
+        setLatestAnalysis(analysis);
+      }
     }
     setLoading(false);
   };
@@ -620,6 +631,8 @@ export function useWeightTracker() {
     markClientNotificationAsRead,
     switchUser,
     getAvailableUsers,
+    latestAnalysis,
+    setLatestAnalysis,
     joinCoach: async (coachId: string) => {
       if (!currentUser) return;
       
