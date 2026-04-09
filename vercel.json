@@ -1,0 +1,7 @@
+{
+  "name": "kcaliper",
+  "outputDirectory": "build",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

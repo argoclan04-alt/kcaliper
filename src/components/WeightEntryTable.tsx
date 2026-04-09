@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from './ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { AddNotesDialog } from './AddNotesDialog';
+import { calculateDoubleExponentialMovingAverage, calculateWeeklyRate } from '../utils/weight-calculations';
 
 interface WeightEntryTableProps {
   entries: WeightEntry[];
@@ -69,9 +70,22 @@ export function WeightEntryTable({
 
   const sortedEntries = [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+  // Recalculate metrics locally for the sorted entries to ensure they are always displayed correctly
+  const entriesWithCalculations = sortedEntries.map((entry, index) => {
+    // If already has values and not in demo mode, we could skip (but for now, consistency is key)
+    const movingAverage = calculateDoubleExponentialMovingAverage(sortedEntries, index);
+    const weeklyRate = calculateWeeklyRate(sortedEntries, index);
+    
+    return {
+      ...entry,
+      movingAverage: movingAverage || entry.movingAverage,
+      weeklyRate: weeklyRate !== 0 ? weeklyRate : (entry.weeklyRate || 0)
+    };
+  });
+
   // Group entries by month
-  const groupedByMonth: { [key: string]: WeightEntry[] } = {};
-  sortedEntries.forEach(entry => {
+  const groupedByMonth: { [key: string]: typeof entriesWithCalculations } = {};
+  entriesWithCalculations.forEach(entry => {
     const date = new Date(entry.date);
     const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     if (!groupedByMonth[monthKey]) {
@@ -339,7 +353,7 @@ export function WeightEntryTable({
                         </div>
                         <div className="text-sm">
                           {(() => {
-                            const percentChange = calculateWeightChangePercentage(entry.weight, entry);
+                            const percentChange = calculateWeightChangePercentage(entry.weight, entry as any);
                             if (percentChange === '-') {
                               return <span className="text-gray-400 dark:text-gray-500">-</span>;
                             }
@@ -448,7 +462,7 @@ export function WeightEntryTable({
                   {/* % Change */}
                   <div className="text-center text-[14px]">
                     {(() => {
-                      const percentChange = calculateWeightChangePercentage(entry.weight, entry);
+                      const percentChange = calculateWeightChangePercentage(entry.weight, entry as any);
                       if (percentChange === '-') {
                         return <span className="text-gray-400 dark:text-gray-500">0.0%</span>;
                       }

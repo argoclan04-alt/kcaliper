@@ -1,0 +1,3 @@
+@echo off
+echo Iniciando Kcaliper AI en red local (0.0.0.0:8112)...
+npm run dev -- --host 0.0.0.0 --port 8112

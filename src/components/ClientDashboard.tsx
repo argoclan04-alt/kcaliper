@@ -6,8 +6,8 @@ import { WeightEntryTable } from './WeightEntryTable';
 import { ClientNotifications } from './ClientNotifications';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { calculateMovingAverage } from '../utils/weight-calculations';
-import { Scale, TrendingDown, TrendingUp, Target, Award } from 'lucide-react';
+import { calculateDoubleExponentialMovingAverage, calculateWeeklyRate } from '../utils/weight-calculations';
+import { Scale, TrendingDown, TrendingUp, Target, Award, ArrowRight } from 'lucide-react';
 import { showAchievementToast } from './AchievementToast';
 
 interface ClientDashboardProps {
@@ -20,9 +20,10 @@ interface ClientDashboardProps {
 }
 
 export function ClientDashboard({ client, onAddWeight, onUpdateEntry, loading, unreadAlerts = [], onDeclinePhotoRequest }: ClientDashboardProps) {
-  const movingAverage = calculateMovingAverage(client.weightEntries, 7);
-  const latestEntry = client.weightEntries
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  const sortedEntries = [...client.weightEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const movingAverage = calculateDoubleExponentialMovingAverage(sortedEntries, 0);
+  const weeklyRate = calculateWeeklyRate(sortedEntries, 0);
+  const latestEntry = sortedEntries[0];
   
   const lowestWeight = client.weightEntries.reduce((min, entry) => 
     entry.weight < min ? entry.weight : min, Infinity
@@ -111,7 +112,7 @@ export function ClientDashboard({ client, onAddWeight, onUpdateEntry, loading, u
             <div className="flex items-center gap-3">
               <Target className="w-8 h-8 text-purple-600" />
               <div>
-                <p className="text-sm text-gray-600">7-Day Average</p>
+                <p className="text-sm text-gray-600">Trend Average (DEMA)</p>
                 <p className="text-xl font-semibold">
                   {client.weightEntries.length > 0 ? `${movingAverage.toFixed(1)} ${client.unit}` : 'No data'}
                 </p>
@@ -177,11 +178,11 @@ export function ClientDashboard({ client, onAddWeight, onUpdateEntry, loading, u
                 {getTargetRateDisplay(client.targetWeeklyRate)}
               </Badge>
             </div>
-            {latestEntry?.weeklyRate !== undefined && (
+            {weeklyRate !== 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium">Current Rate:</span>
-                <Badge className={getWeeklyRateColor(latestEntry.weeklyRate)}>
-                  {latestEntry.weeklyRate > 0 ? '+' : ''}{latestEntry.weeklyRate} {client.unit}/week
+                <Badge className={`${getWeeklyRateColor(weeklyRate)} border font-bold`}>
+                  {weeklyRate > 0 ? '+' : ''}{weeklyRate.toFixed(2)} {client.unit}/week
                 </Badge>
               </div>
             )}

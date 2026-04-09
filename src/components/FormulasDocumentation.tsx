@@ -1,297 +1,242 @@
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Info, TrendingDown } from 'lucide-react';
+import { Info, TrendingDown, Scale, Percent, Filter, Eye, Calculator, ChevronRight } from 'lucide-react';
 import { Badge } from './ui/badge';
+import { useState, useEffect } from 'react';
+
+const sections = [
+  { id: 'dema', title: 'Media Móvil (DEMA)', icon: TrendingDown },
+  { id: 'weekly-rate', title: 'Tasa Semanal', icon: Scale },
+  { id: 'percentage', title: '% de Cambio', icon: Percent },
+  { id: 'exclusion', title: 'Exclusión de Datos', icon: Filter },
+  { id: 'indicators', title: 'Indicadores Visuales', icon: Eye },
+];
 
 export function FormulasDocumentation() {
+  const [activeSection, setActiveSection] = useState('dema');
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    sections.forEach((section) => {
+      const el = document.getElementById(section.id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto p-6">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold mb-2">Weight Tracker - Formula Documentation</h1>
-        <p className="text-gray-600">Understanding how the calculations work</p>
-      </div>
+    <div className="flex flex-col lg:flex-row gap-8 relative p-1 sm:p-2">
+      {/* Sidebar - Desktop Only */}
+      <aside className="hidden lg:block w-64 shrink-0">
+        <div className="sticky top-6 space-y-1">
+          <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4 px-3">Navegación</p>
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => scrollToSection(section.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
+                activeSection === section.id
+                  ? 'bg-argo-gradient text-white shadow-lg shadow-blue-500/20 scale-[1.02]'
+                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <section.icon className="w-4 h-4" />
+              {section.title}
+              {activeSection === section.id && <ChevronRight className="ml-auto w-4 h-4" />}
+            </button>
+          ))}
+        </div>
+      </aside>
 
-      {/* Moving Average - DEMA */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingDown className="w-5 h-5 text-blue-600" />
-            Double Exponential Moving Average (DEMA)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Badge className="mb-3">What is it?</Badge>
-            <p className="text-sm text-gray-700">
-              The DEMA is a smoothed trend line that filters out daily weight fluctuations caused by water retention, 
-              food volume, and other temporary factors. It shows your true weight trend over time.
+      {/* Main Content */}
+      <div className="flex-1 space-y-12 pb-20">
+        <header className="mb-8">
+          <Badge className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-none mb-3">SISTEMA ARGO</Badge>
+          <h1 className="text-4xl font-black tracking-tight mb-2">Documentación Técnica</h1>
+          <p className="text-gray-600 dark:text-gray-400">Cómo procesamos tus datos para convertirlos en progreso real.</p>
+        </header>
+
+        {/* Moving Average - DEMA */}
+        <section id="dema" className="scroll-mt-6 space-y-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-600">
+              <TrendingDown className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-bold">Media Móvil Exponencial Doble (DEMA)</h2>
+          </div>
+
+          <div className="glass p-6 rounded-2xl border border-white/10 space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                El **DEMA** es una línea de tendencia suavizada que filtra las fluctuaciones diarias causadas por retención de líquidos, volumen de comida y otros factores temporales. Muestra tu tendencia de peso real.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Cálculo Matemático</p>
+              <div className="bg-gray-900/5 dark:bg-white/5 border border-white/10 p-5 rounded-2xl font-mono text-sm space-y-4 shadow-inner">
+                <div>
+                  <p className="text-blue-600 dark:text-blue-400 font-bold mb-1">Paso 1: Calcular EMA (Exponential Moving Average)</p>
+                  <p className="font-medium text-lg leading-none py-2 text-gray-900 dark:text-white">EMAₜ = (Wₜ × α) + (EMAₜ₋₁ × (1 - α))</p>
+                  <p className="text-[10px] text-gray-500">Donde α = 2 / (n + 1). Usamos n=7 para suavizado semanal.</p>
+                </div>
+                <div className="border-t border-gray-200 dark:border-white/5 pt-4">
+                  <p className="text-blue-600 dark:text-blue-400 font-bold mb-1">Paso 2: Calcular DEMA</p>
+                  <p className="font-medium text-lg leading-none py-2 text-gray-900 dark:text-white">DEMA = (2 × EMAₙ) - EMA(EMAₙ)</p>
+                  <p className="text-[10px] text-gray-500 italic">Aplica EMA dos veces eliminando el retraso (lag) de la media simple.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex gap-3">
+              <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-blue-800 dark:text-blue-300">
+                **¿Por qué DEMA?** Responde más rápido a los cambios reales que una media móvil simple, eliminando el "ruido" diario que suele frustrar a los atletas.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Weekly Rate */}
+        <section id="weekly-rate" className="scroll-mt-6 space-y-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-green-500/10 rounded-xl flex items-center justify-center text-green-600">
+              <Scale className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-bold">Tasa de Cambio Semanal</h2>
+          </div>
+
+          <div className="glass p-6 rounded-2xl border border-white/10 space-y-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Indica cuánto peso estás ganando o perdiendo por semana. Se calcula mediante **regresión lineal** sobre la tendencia DEMA, no sobre los datos en bruto.
             </p>
-          </div>
 
-          <div>
-            <Badge variant="outline" className="mb-3">Formula</Badge>
-            <div className="bg-gray-50 p-4 rounded-lg space-y-3 font-mono text-sm">
-              <div>
-                <p className="text-gray-600 mb-1">Step 1: Calculate EMA (Exponential Moving Average)</p>
-                <p className="font-medium">EMA_today = (Weight_today × α) + (EMA_yesterday × (1 - α))</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5 p-4 rounded-xl">
+                 <p className="text-[10px] font-bold uppercase text-gray-500 mb-2">Fórmula de Regresión</p>
+                 <p className="font-mono text-lg mb-1 text-gray-900 dark:text-white">y = mx + b</p>
+                 <p className="text-[10px] text-gray-600">m = Σ((x - x̄)(y - ȳ)) / Σ((x - x̄)²)</p>
               </div>
-              <div>
-                <p className="text-gray-600 mb-1">Where α (smoothing factor) is:</p>
-                <p className="font-medium">α = 2 / (n + 1)</p>
-                <p className="text-xs text-gray-500 mt-1">n = period (typically 7 days for weekly smoothing)</p>
-              </div>
-              <div className="border-t pt-3 mt-3">
-                <p className="text-gray-600 mb-1">Step 2: Calculate DEMA (Double Exponential Moving Average)</p>
-                <p className="font-medium">DEMA = (2 × EMA_n) - EMA(EMA_n)</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  This applies the EMA calculation twice to further smooth the data
-                </p>
+              <div className="bg-argo-gradient p-4 rounded-xl text-white shadow-lg">
+                 <p className="text-[10px] font-bold uppercase opacity-70 mb-2">Resultado Final</p>
+                 <p className="text-xl font-black">Tasa = m × 7</p>
+                 <p className="text-xs opacity-90 mt-1">Multiplicamos la pendiente diaria para obtener el ritmo semanal.</p>
               </div>
             </div>
-          </div>
 
-          <div>
-            <Badge variant="secondary" className="mb-3">How it's calculated</Badge>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
-              <li>First, we calculate a simple EMA using today's weight and yesterday's EMA</li>
-              <li>The smoothing factor (α = 2/(7+1) = 0.25 for 7-day period) determines how much weight to give recent data</li>
-              <li>Then we apply EMA again on the EMA values to get the DEMA</li>
-              <li>DEMA responds faster to real changes than a simple moving average, while still filtering noise</li>
-            </ol>
-          </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start gap-2">
-              <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-900">
-                <p className="font-medium mb-1">Why DEMA?</p>
-                <p>
-                  DEMA is more responsive than a simple moving average, making it better at tracking actual 
-                  body composition changes while still smoothing out daily fluctuations. This is why it's 
-                  preferred for weight tracking applications.
-                </p>
-              </div>
+            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+               <ul className="space-y-2 text-sm text-green-800 dark:text-green-300">
+                 <li className="flex gap-2"><div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" /> Usamos los últimos 7-14 valores de DEMA.</li>
+                 <li className="flex gap-2"><div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1.5 shrink-0" /> Positivo = Ganando peso / Negativo = Perdiendo peso.</li>
+               </ul>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </section>
 
-      {/* Weekly Rate */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingDown className="w-5 h-5 text-green-600" />
-            Weekly Rate of Change
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Badge className="mb-3">What is it?</Badge>
-            <p className="text-sm text-gray-700">
-              The weekly rate shows how much weight you're gaining or losing per week. It's calculated using 
-              linear regression on the DEMA trend line, not on raw weight data.
-            </p>
-          </div>
-
-          <div>
-            <Badge variant="outline" className="mb-3">Formula</Badge>
-            <div className="bg-gray-50 p-4 rounded-lg space-y-3 font-mono text-sm">
-              <div>
-                <p className="text-gray-600 mb-1">Linear Regression Formula:</p>
-                <p className="font-medium">y = mx + b</p>
-                <p className="text-xs text-gray-500 mt-1">Where m is the slope (rate of change)</p>
-              </div>
-              <div>
-                <p className="text-gray-600 mb-1">Slope calculation:</p>
-                <p className="font-medium">m = Σ((x - x̄)(y - ȳ)) / Σ((x - x̄)²)</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  x = days from start, y = DEMA values, x̄ = mean of days, ȳ = mean of DEMA values
-                </p>
-              </div>
-              <div className="border-t pt-3 mt-3">
-                <p className="text-gray-600 mb-1">Weekly Rate:</p>
-                <p className="font-medium">Weekly Rate = m × 7</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Multiply the daily slope by 7 to get the weekly rate
-                </p>
-              </div>
+        {/* Percentage */}
+        <section id="percentage" className="scroll-mt-6 space-y-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-600">
+              <Percent className="w-6 h-6" />
             </div>
+            <h2 className="text-2xl font-bold">Porcentaje de Cambio de Peso</h2>
           </div>
 
-          <div>
-            <Badge variant="secondary" className="mb-3">How it's calculated</Badge>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
-              <li>We use the last 7-14 DEMA values (trend line, not raw weights)</li>
-              <li>Apply linear regression to find the line of best fit through these points</li>
-              <li>The slope of this line tells us the daily rate of change</li>
-              <li>Multiply by 7 to convert to weekly rate</li>
-              <li>Positive = gaining weight, Negative = losing weight</li>
-            </ol>
-          </div>
-
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-start gap-2">
-              <Info className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-green-900">
-                <p className="font-medium mb-1">Why use DEMA for rate calculation?</p>
-                <p>
-                  Using DEMA instead of raw weights ensures the weekly rate isn't affected by daily fluctuations. 
-                  This gives a more accurate picture of your actual progress trend.
-                </p>
+          <Card className="border-none shadow-none bg-gray-50 dark:bg-gray-900/60 rounded-2xl">
+            <CardContent className="pt-6 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Muestra la tasa de cambio semanal como un porcentaje relativo a tu tendencia actual.
+              </p>
+              <div className="bg-indigo-950 text-indigo-100 p-6 rounded-2xl font-mono text-center shadow-lg relative overflow-hidden group">
+                <div className="relative z-10">
+                  <p className="text-xs opacity-50 mb-2 uppercase tracking-tighter">Cálculo de Intensidad</p>
+                  <p className="text-xl font-bold">% Cambio = (Tasa / DEMA) × 100</p>
+                </div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 blur-[50px] rounded-full group-hover:scale-150 transition-transform"></div>
               </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* Exclusion */}
+        <section id="exclusion" className="scroll-mt-6 space-y-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center text-amber-600">
+              <Filter className="w-6 h-6" />
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Percentage of Weight Lost/Gained */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Percentage of Weight Change</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Badge className="mb-3">What is it?</Badge>
-            <p className="text-sm text-gray-700">
-              This shows the rate of weekly change as a percentage relative to your current DEMA trend. It indicates how fast you're changing weight relative to your current body weight trend.
-            </p>
+            <h2 className="text-2xl font-bold">Exclusión de Datos</h2>
           </div>
 
-          <div>
-            <Badge variant="outline" className="mb-3">Formula</Badge>
-            <div className="bg-gray-50 p-4 rounded-lg font-mono text-sm">
-              <p className="font-medium">% Change = (Weekly Rate / Moving Average) × 100</p>
-              <div className="mt-3 text-xs text-gray-600">
-                <p>• Based on DEMA-calculated weekly rate (2 decimals)</p>
-                <p>• Normalized by current moving average</p>
-                <p>• Shows percentage rate of change per week</p>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <Badge variant="secondary" className="mb-3">Example</Badge>
-            <div className="bg-gray-50 p-4 rounded-lg text-sm space-y-2">
-              <p>Moving Average (DEMA): 78.5 kg</p>
-              <p>Weekly Rate: -0.50 kg/week</p>
-              <p className="font-medium text-green-600">% Change = (-0.50 / 78.5) × 100 = -0.6%/week</p>
-              <p className="text-xs text-gray-600 mt-2">This means 0.6% weight loss per week relative to current trend</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Data Exclusion */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Data Exclusion System</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Badge className="mb-3">What is it?</Badge>
-            <p className="text-sm text-gray-700">
-              You can exclude specific weight entries from calculations (DEMA and weekly rate) while keeping them 
-              visible in your history. This is useful for outliers like post-cheat meal weigh-ins or entries taken 
-              under unusual circumstances.
-            </p>
-          </div>
-
-          <div>
-            <Badge variant="secondary" className="mb-3">How it works</Badge>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
-              <li>Click on any weight entry row to toggle exclusion</li>
-              <li>Excluded entries show an orange circle in the top-right corner</li>
-              <li>Excluded weights are NOT used in DEMA or weekly rate calculations</li>
-              <li>The entry remains visible in your history for reference</li>
-              <li>You can re-include the entry at any time by clicking again</li>
-            </ol>
-          </div>
-
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <div className="flex items-start gap-2">
-              <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-amber-900">
-                <p className="font-medium mb-1">When to exclude data?</p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>After a cheat meal or refeed day</li>
-                  <li>During menstrual cycle (for female clients)</li>
-                  <li>After unusually high sodium intake</li>
-                  <li>If you weighed in at a different time than usual</li>
-                  <li>Any entry you know isn't representative of your true progress</li>
+          <div className="glass p-6 rounded-2xl border border-white/10 space-y-4">
+            <div className="flex flex-col md:flex-row gap-6 text-gray-900 dark:text-white">
+              <div className="flex-1 space-y-4">
+                <p className="text-sm">Puedes excluir entradas específicas de los cálculos sin borrarlas. Ideal para:</p>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {['Comidas trampa', 'Retención por sodio', 'Cambios de horario', 'Ciclo menstrual'].map((t) => (
+                    <li key={t} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="w-1 h-1 rounded-full bg-amber-500" /> {t}
+                    </li>
+                  ))}
                 </ul>
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Color Coding */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Visual Indicators</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Badge className="mb-3">Weekly Rate Colors</Badge>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Badge className="bg-green-100 text-green-700 border-green-200 border">-0.5 kg/week</Badge>
-                <span className="text-sm text-gray-700">Negative rate (losing weight) = Light green</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge className="bg-red-100 text-red-700 border-red-200 border">+0.3 kg/week</Badge>
-                <span className="text-sm text-gray-700">Positive rate (gaining weight) = Light red</span>
+              <div className="md:w-1/3 bg-amber-500/5 border border-amber-500/10 rounded-2xl p-4 flex flex-col justify-center items-center text-center">
+                 <Filter className="w-8 h-8 text-amber-500 mb-2 opacity-50" />
+                 <p className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">Funcionamiento</p>
+                 <p className="text-xs">Haz clic en cualquier fila para alternar exclusión.</p>
               </div>
             </div>
           </div>
+        </section>
 
-          <div>
-            <Badge className="mb-3 mt-6">Target Rate Badge</Badge>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Badge className="bg-blue-100 text-blue-700 border-blue-300 border">Target</Badge>
-                <span className="text-sm text-gray-700">Target for losing weight = Blue</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge className="bg-orange-100 text-orange-700 border-orange-300 border">Target</Badge>
-                <span className="text-sm text-gray-700">Target for gaining weight = Orange</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Badge className="bg-purple-100 text-purple-700 border-purple-300 border">Target</Badge>
-                <span className="text-sm text-gray-700">Target for maintaining = Purple</span>
-              </div>
+        {/* Indicators */}
+        <section id="indicators" className="scroll-mt-6 space-y-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-pink-500/10 rounded-xl flex items-center justify-center text-pink-600">
+              <Eye className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-bold">Indicadores Visuales</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-2xl bg-green-500/10 border border-green-500/20">
+               <div className="flex items-center justify-between mb-2">
+                 <Badge className="bg-green-100 text-green-700 border-green-200">-0.5 kg</Badge>
+                 <span className="text-[10px] uppercase font-bold text-green-600">Pérdida</span>
+               </div>
+               <p className="text-xs text-gray-600 dark:text-gray-400">Verde indica que tu tendencia de peso está bajando.</p>
+            </div>
+            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+               <div className="flex items-center justify-between mb-2">
+                 <Badge className="bg-red-100 text-red-700 border-red-200">+0.3 kg</Badge>
+                 <span className="text-[10px] uppercase font-bold text-red-600">Ganancia</span>
+               </div>
+               <p className="text-xs text-gray-600 dark:text-gray-400">Rojo indica que tu tendencia de peso está subiendo.</p>
             </div>
           </div>
+        </section>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-            <div className="flex items-start gap-2">
-              <Info className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-900">
-                <p className="font-medium mb-1">Different borders and colors</p>
-                <p>
-                  The Target badge has a thicker, more distinct border and different color palette than the 
-                  Weekly Rate badge, making it easy to distinguish between your actual rate and your target at a glance.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Summary */}
-      <Card className="border-2 border-blue-200 bg-blue-50/30">
-        <CardHeader>
-          <CardTitle>Quick Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 text-sm">
-            <p><strong>DEMA (Moving Average):</strong> Smooths daily fluctuations using double exponential smoothing to show true trend</p>
-            <p><strong>Weekly Rate:</strong> Linear regression on DEMA values, showing kg/lbs change per week</p>
-            <p><strong>% Change:</strong> Percentage rate of change per week relative to DEMA trend (Weekly Rate / Moving Average × 100)</p>
-            <p><strong>Exclusion:</strong> Click any row to exclude outliers from calculations while keeping them visible</p>
-            <p><strong>Color Coding:</strong> Green = weight loss, Red = weight gain, Target badges have distinct borders and colors</p>
-          </div>
-        </CardContent>
-      </Card>
+        <footer className="pt-12 border-t border-gray-100 dark:border-white/5 text-center">
+           <Calculator className="w-6 h-6 text-gray-300 dark:text-gray-700 mx-auto mb-4" />
+           <p className="text-xs text-gray-500">¿Tienes dudas matemáticas? Consulta con tu coach sobre los umbrales específicos de tu plan.</p>
+        </footer>
+      </div>
     </div>
   );
 }

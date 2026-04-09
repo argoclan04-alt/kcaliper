@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
-import { Button } from './ui/button';
-import { Textarea } from './ui/textarea';
-import { Label } from './ui/label';
-import { Camera, Upload, X, Info, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { Camera, Upload, X, Info, ChevronDown, ChevronUp, Check, Loader2 } from 'lucide-react';
+import { uploadPhotoToR2 } from '../utils/storage';
 import { toast } from 'sonner@2.0.3';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/button';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
 
 interface PhotoUploadDialogProps {
   open: boolean;
@@ -19,6 +20,7 @@ interface PhotoUploadDialogProps {
 interface PhotoPreview {
   id: string;
   url: string;
+  file: File;
   selected: boolean;
 }
 
@@ -27,6 +29,7 @@ export function PhotoUploadDialog({ open, onOpenChange, date, viewType = 'front'
   const [notes, setNotes] = useState('');
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,26 +46,22 @@ export function PhotoUploadDialog({ open, onOpenChange, date, viewType = 'front'
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      const newPhotos: PhotoPreview[] = [];
+      const newPreviews: PhotoPreview[] = [];
       const fileArray = Array.from(files);
       
       fileArray.forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          newPhotos.push({
-            id: `${Date.now()}_${index}`,
-            url: reader.result as string,
-            selected: photoPreviews.length + newPhotos.length < 2 // Auto-select first 2
-          });
-          
-          if (newPhotos.length === fileArray.length) {
-            setPhotoPreviews(prev => [...prev, ...newPhotos]);
-            setTutorialOpen(false);
-            setIsCapturing(false);
-          }
-        };
-        reader.readAsDataURL(file);
+        const url = URL.createObjectURL(file);
+        newPreviews.push({
+          id: `${Date.now()}_${index}`,
+          url,
+          file,
+          selected: photoPreviews.length + newPreviews.length < 2
+        });
       });
+      
+      setPhotoPreviews(prev => [...prev, ...newPreviews]);
+      setTutorialOpen(false);
+      setIsCapturing(false);
     }
   };
 
@@ -87,36 +86,47 @@ export function PhotoUploadDialog({ open, onOpenChange, date, viewType = 'front'
     setPhotoPreviews(prev => prev.filter(p => p.id !== id));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const selectedPhotos = photoPreviews.filter(p => p.selected);
     
     if (selectedPhotos.length === 0) {
-      toast.error('Please select at least one photo');
+      toast.error('Por favor selecciona al menos una foto');
       return;
     }
     
-    if (selectedPhotos.length > 2) {
-      toast.error('Maximum 2 photos allowed per view type');
-      return;
-    }
-    
-    // Format: ClientName_Date_PhotoViewType_#1.jpg
-    const formattedDate = date.replace(/-/g, '');
-    const viewTypeFormatted = viewType.charAt(0).toUpperCase() + viewType.slice(1);
-    
-    selectedPhotos.forEach((photo, index) => {
-      const photoNumber = index + 1;
-      const filename = `${clientName.replace(/\s+/g, '')}_${formattedDate}_${viewTypeFormatted}View_#${photoNumber}.jpg`;
+    setIsUploading(true);
+    try {
+      // Create a copy of notes to send to onSubmit
+      const currentNotes = notes;
       
-      // In a real implementation, you would rename the file here
-      // For now, we'll just submit with the URL and notes
-      onSubmit(photo.url, `${notes}\n\nFilename: ${filename}`, viewType);
-    });
-    
-    setPhotoPreviews([]);
-    setNotes('');
-    setTutorialOpen(false);
-    toast.success(`${selectedPhotos.length} photo(s) uploaded successfully!`);
+      // Upload all selected photos in parallel
+      const uploadPromises = selectedPhotos.map(async (photo) => {
+        const r2Url = await uploadPhotoToR2(photo.file, {
+          clientId: clientName.replace(/\s+/g, ''), // Temporary, ideal would be currentUser.id
+          date,
+          viewType
+        });
+        return r2Url;
+      });
+
+      const urls = await Promise.all(uploadPromises);
+
+      // Call onSubmit for each photo (or modified useWeightTracker to handle multiple)
+      urls.forEach((url) => {
+        onSubmit(url, currentNotes, viewType);
+      });
+
+      setPhotoPreviews([]);
+      setNotes('');
+      setTutorialOpen(false);
+      onOpenChange(false);
+      toast.success(`${selectedPhotos.length} foto(s) subida(s) exitosamente`);
+    } catch (error) {
+      console.error('Error uploading to R2:', error);
+      toast.error('Error al subir las fotos. Revisa tu conexión.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const getViewTypeLabel = () => {
@@ -317,8 +327,15 @@ export function PhotoUploadDialog({ open, onOpenChange, date, viewType = 'front'
             Cancel
           </Button>
           {photoPreviews.length > 0 && (
-            <Button onClick={handleSubmit}>
-              Upload {photoPreviews.filter(p => p.selected).length} Photo(s)
+            <Button onClick={handleSubmit} disabled={isUploading} className="bg-blue-600 hover:bg-blue-700 text-white">
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Subiendo...
+                </>
+              ) : (
+                `Subir ${photoPreviews.filter(p => p.selected).length} Foto(s)`
+              )}
             </Button>
           )}
         </div>

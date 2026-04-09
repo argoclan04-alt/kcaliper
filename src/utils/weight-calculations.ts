@@ -68,8 +68,9 @@ export function calculateWeeklyRate(entries: WeightEntry[], currentIndex: number
   if (!entries || entries.length < 3 || currentIndex >= entries.length || currentIndex < 0) return 0;
 
   // Get entries for trend calculation (from current entry to the oldest)
+  // Limited to 14 entries (the window size) to ensure we get a "current" rate, as per docs.
   // Filter out excluded entries
-  const relevantEntries = entries.slice(currentIndex).filter(entry => !entry.excludeFromCalculations);
+  const relevantEntries = entries.slice(currentIndex, currentIndex + 14).filter(entry => !entry.excludeFromCalculations);
   
   if (relevantEntries.length < 3) return 0;
 

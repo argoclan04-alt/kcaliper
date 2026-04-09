@@ -39,6 +39,17 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* FitPulse AI Brand */
+  --fp-violet: #6C5CE7;
+  --fp-violet-dark: #5A4BD1;
+  --fp-cyan: #00D2FF;
+  --fp-coral: #FF6B6B;
+  --fp-coral-dark: #E85555;
+  --fp-dark: #0A0A1A;
+  --fp-dark-card: #12122A;
+  --fp-dark-border: rgba(108, 92, 231, 0.2);
+  --fp-gold: #FFD93D;
 }
 
 .dark {
@@ -130,62 +141,24 @@
 }
 
 /**
- * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
+ * Base typography.
  */
 @layer base {
   :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
-    h1 {
-      font-size: var(--text-2xl);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.5;
-    }
-
-    h2 {
-      font-size: var(--text-xl);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.5;
-    }
-
-    h3 {
-      font-size: var(--text-lg);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.5;
-    }
-
-    h4 {
-      font-size: var(--text-base);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.5;
-    }
-
-    p {
-      font-size: var(--text-base);
-      font-weight: var(--font-weight-normal);
-      line-height: 1.5;
-    }
-
-    label {
-      font-size: var(--text-base);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.5;
-    }
-
-    button {
-      font-size: var(--text-base);
-      font-weight: var(--font-weight-medium);
-      line-height: 1.5;
-    }
-
-    input {
-      font-size: var(--text-base);
-      font-weight: var(--font-weight-normal);
-      line-height: 1.5;
-    }
+    h1 { font-size: var(--text-2xl); font-weight: var(--font-weight-medium); line-height: 1.5; }
+    h2 { font-size: var(--text-xl); font-weight: var(--font-weight-medium); line-height: 1.5; }
+    h3 { font-size: var(--text-lg); font-weight: var(--font-weight-medium); line-height: 1.5; }
+    h4 { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+    p { font-size: var(--text-base); font-weight: var(--font-weight-normal); line-height: 1.5; }
+    label { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+    button { font-size: var(--text-base); font-weight: var(--font-weight-medium); line-height: 1.5; }
+    input { font-size: var(--text-base); font-weight: var(--font-weight-normal); line-height: 1.5; }
   }
 }
 
 html {
   font-size: var(--font-size);
+  scroll-behavior: smooth;
 }
 
 /* Date and Time input icon fixes */
@@ -216,4 +189,356 @@ input[type="time"]::-webkit-calendar-picker-indicator {
 input[type="date"]:hover::-webkit-calendar-picker-indicator,
 input[type="time"]:hover::-webkit-calendar-picker-indicator {
   opacity: 1;
+}
+
+/* ========================================
+   FitPulse AI — Landing Page Design System
+   ======================================== */
+
+/* Brand Gradients */
+.bg-fp-gradient {
+  background: linear-gradient(135deg, #6C5CE7 0%, #00D2FF 100%);
+}
+
+.bg-fp-gradient-warm {
+  background: linear-gradient(135deg, #6C5CE7 0%, #FF6B6B 100%);
+}
+
+.bg-fp-gradient-full {
+  background: linear-gradient(135deg, #6C5CE7 0%, #00D2FF 50%, #FF6B6B 100%);
+}
+
+.text-fp-gradient {
+  background: linear-gradient(135deg, #6C5CE7 0%, #00D2FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-fp-gradient-warm {
+  background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Legacy support */
+.bg-argo-gradient {
+  background: linear-gradient(135deg, #6C5CE7 0%, #00D2FF 100%);
+}
+
+.text-argo-gradient {
+  background: linear-gradient(135deg, #6C5CE7 0%, #00D2FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Landing Page Dark Background */
+.fp-dark-bg {
+  background: var(--fp-dark);
+  color: #ffffff;
+}
+
+.fp-dark-card {
+  background: var(--fp-dark-card);
+  border: 1px solid var(--fp-dark-border);
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.glass-dark {
+  background: rgba(10, 10, 26, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(108, 92, 231, 0.15);
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.05); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(108, 92, 231, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(108, 92, 231, 0.6), 0 0 80px rgba(0, 210, 255, 0.2); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes typing-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-4px); }
+}
+
+@keyframes chat-appear {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes counter-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes border-glow {
+  0%, 100% { border-color: rgba(108, 92, 231, 0.3); }
+  50% { border-color: rgba(108, 92, 231, 0.8); }
+}
+
+@keyframes particle-float {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.6; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes scroll-indicator {
+  0%, 100% { opacity: 0.4; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(8px); }
+}
+
+/* Animation Classes */
+.animate-fade-in { animation: fadeIn 0.8s ease-out forwards; }
+.animate-slide-up { animation: slideUp 0.8s ease-out forwards; }
+.animate-slide-in-left { animation: slideInLeft 0.8s ease-out forwards; }
+.animate-slide-in-right { animation: slideInRight 0.8s ease-out forwards; }
+.animate-pulse-slow { animation: pulse-slow 8s infinite ease-in-out; }
+.animate-float { animation: float 6s infinite ease-in-out; }
+.animate-glow { animation: glow-pulse 3s infinite ease-in-out; }
+.animate-gradient { background-size: 200% 200%; animation: gradient-shift 4s ease infinite; }
+.animate-chat-appear { animation: chat-appear 0.5s ease-out forwards; }
+.animate-shimmer { background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
+.animate-border-glow { animation: border-glow 2s infinite ease-in-out; }
+.animate-scroll-indicator { animation: scroll-indicator 2s infinite ease-in-out; }
+
+/* Marquee scroll for FOMO banner */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marquee 20s linear infinite; }
+
+/* Expand width for progress bar */
+@keyframes expandWidth {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+/* Typing dots */
+.typing-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.5); margin: 0 2px; }
+.typing-dot:nth-child(1) { animation: typing-dot 1.4s infinite 0s; }
+.typing-dot:nth-child(2) { animation: typing-dot 1.4s infinite 0.2s; }
+.typing-dot:nth-child(3) { animation: typing-dot 1.4s infinite 0.4s; }
+
+/* Delays */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-1000 { animation-delay: 1000ms; }
+.delay-1500 { animation-delay: 1500ms; }
+.delay-2000 { animation-delay: 2000ms; }
+.delay-2500 { animation-delay: 2500ms; }
+.delay-3000 { animation-delay: 3000ms; }
+
+/* WhatsApp Chat Simulation */
+.wa-chat-container {
+  background: #0B141A;
+  border-radius: 20px;
+  overflow: hidden;
+  max-width: 360px;
+  margin: 0 auto;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4);
+}
+
+.wa-header {
+  background: #1F2C34;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wa-messages {
+  padding: 12px 10px;
+  min-height: 280px;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.wa-bubble-bot {
+  background: #1F2C34;
+  color: #E9EDEF;
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 8px;
+  margin-bottom: 6px;
+  max-width: 85%;
+  font-size: 13px;
+  line-height: 1.4;
+  position: relative;
+}
+
+.wa-bubble-user {
+  background: #005C4B;
+  color: #E9EDEF;
+  padding: 8px 12px;
+  border-radius: 8px 0 8px 8px;
+  margin-bottom: 6px;
+  max-width: 85%;
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.wa-time {
+  font-size: 10px;
+  color: rgba(233, 237, 239, 0.45);
+  text-align: right;
+  margin-top: 2px;
+}
+
+/* Pricing Card Glow */
+.pricing-card-recommended {
+  position: relative;
+  border: 2px solid var(--fp-violet);
+  box-shadow: 0 0 30px rgba(108, 92, 231, 0.15);
+  transform: scale(1.03);
+}
+
+.pricing-card-recommended::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #6C5CE7, #00D2FF);
+  z-index: -1;
+  filter: blur(8px);
+  opacity: 0.4;
+}
+
+/* Countdown Timer */
+.countdown-digit {
+  background: var(--fp-dark-card);
+  border: 1px solid var(--fp-dark-border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  min-width: 56px;
+  text-align: center;
+}
+
+.countdown-digit span:first-child {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  color: #fff;
+}
+
+.countdown-digit span:last-child {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.5);
+}
+
+/* Scroll snap for mobile */
+@media (max-width: 768px) {
+  .mobile-scroll-snap {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mobile-scroll-snap > * {
+    scroll-snap-align: center;
+  }
+}
+
+/* Particle Background */
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: var(--fp-violet);
+  border-radius: 50%;
+  opacity: 0;
+  animation: particle-float linear infinite;
+}
+
+/* Image placeholder styling */
+.img-placeholder {
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(0, 210, 255, 0.1) 100%);
+  border: 2px dashed rgba(108, 92, 231, 0.3);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(108, 92, 231, 0.6);
+  font-size: 14px;
+  min-height: 200px;
+}
+
+/* CTA Button Pulse */
+.cta-pulse {
+  position: relative;
+  overflow: visible;
+}
+.cta-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: inherit;
+  opacity: 0;
+  z-index: -1;
+  animation: glow-pulse 2s infinite;
 }

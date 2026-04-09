@@ -1,475 +1,602 @@
-import { useState, useEffect } from 'react';
-import { Client, Coach, WeightEntry, Alert, User } from '../types/weight-tracker';
-import { mockCoach, mockAlerts, mockUsers } from '../utils/mock-data';
+import { useState, useEffect, useRef } from 'react';
+import { Client, Coach, WeightEntry, Alert, User, NutritionData, ClientNotification } from '../types/weight-tracker';
+import { supabase } from '../lib/supabase';
+import { toast } from 'sonner';
+import { mockUsers } from '../utils/mock-data';
+import { estebanCoach, estebanAlerts, estebanUsers } from '../utils/mock-data-esteban';
+
+// Helper for UI-friendly IDs and formatting preserved from calculations
 import { recalculateAllWeeklyRates, findLowestAndHighestWeights, checkRateDeviation } from '../utils/weight-calculations';
 
-const STORAGE_KEYS = {
-  COACH_DATA: 'weight_tracker_coach',
-  ALERTS: 'weight_tracker_alerts',
-  CURRENT_USER: 'weight_tracker_current_user'
-};
-
 export function useWeightTracker() {
-  const [coach, setCoach] = useState<Coach>(() => {
-    // Initialize coach with recalculated entries
-    const initialCoach = {
-      ...mockCoach,
-      clients: mockCoach.clients.map(client => ({
-        ...client,
-        weightEntries: recalculateAllWeeklyRates(client.weightEntries)
-      }))
-    };
-    return initialCoach;
-  });
-  const [alerts, setAlerts] = useState<Alert[]>(mockAlerts);
-  const [currentUser, setCurrentUser] = useState<User>(mockUsers[0]); // Default to coach
-  const [loading, setLoading] = useState(false);
+  const [coach, setCoach] = useState<Coach | null>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const isMockMode = useRef<boolean>(false);
 
-  // Load data from localStorage on mount
+  // Load real data from Supabase on mount
   useEffect(() => {
-    const savedCoach = localStorage.getItem(STORAGE_KEYS.COACH_DATA);
-    const savedAlerts = localStorage.getItem(STORAGE_KEYS.ALERTS);
-    const savedUser = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+    async function loadInitialData() {
+      setLoading(true);
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        // Check which account is logged in via our frontend auth
+        const accountId = localStorage.getItem('kcaliper_account') || 'argo';
+        console.log(`Entering Demo Mode (Account: ${accountId})`);
+        await initializeMockMode(accountId);
+        return;
+      }
 
-    if (savedCoach) {
-      setCoach(JSON.parse(savedCoach));
+      await loadUserData(session.user.id);
     }
-    if (savedAlerts) {
-      setAlerts(JSON.parse(savedAlerts));
+
+    async function loadUserData(userId: string) {
+      // 1. Fetch Profile
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (profile) {
+        setCurrentUser(profile as User);
+
+        // 2. Load Coach Data (Clients, Settings, etc.)
+        const coachId = profile.role === 'coach' ? profile.id : null;
+        
+        // If client, we need to know their coach to fetch fellow clients or just self
+        let effectiveCoachId = coachId;
+        if (profile.role === 'client') {
+          const { data: settings } = await supabase.from('client_settings').select('coach_id').eq('id', userId).single();
+          effectiveCoachId = settings?.coach_id;
+        }
+
+        if (effectiveCoachId) {
+          // 1. Fetch Client Settings (to get the list of athletes)
+          const { data: clientsSettings, error: settingsError } = await supabase
+            .from('client_settings')
+            .select('*')
+            .eq('coach_id', effectiveCoachId);
+
+          // FALLBACK MOCK DATA: If no settings found or error (e.g. RLS blocking bypass)
+          if (!clientsSettings || clientsSettings.length === 0) {
+             console.warn("No real data found for userId. Using Mock Data Fallback.");
+             await initializeMockMode(userId);
+             return;
+          }
+
+          if (clientsSettings && clientsSettings.length > 0) {
+            const clientIds = clientsSettings.map(s => s.id);
+
+            // 2. Parallel fetch all related data for these clients (No nested joins)
+            const [
+              { data: clientProfiles },
+              { data: allEntries },
+              { data: allPhotos },
+              { data: allRequests },
+              { data: allPlans }
+            ] = await Promise.all([
+              supabase.from('profiles').select('*').in('id', clientIds),
+              supabase.from('weight_entries').select('*').in('client_id', clientIds).order('date', { ascending: false }),
+              supabase.from('physique_photos').select('*').in('client_id', clientIds),
+              supabase.from('photo_requests').select('*').in('client_id', clientIds),
+              supabase.from('nutrition_plans').select('*').in('client_id', clientIds)
+            ]);
+
+            const formattedClients = clientsSettings.map((s: any) => {
+              const profile = clientProfiles?.find(p => p.id === s.id) || {};
+              const entries = allEntries?.filter(e => e.client_id === s.id) || [];
+              const photos = allPhotos?.filter(p => p.client_id === s.id) || [];
+              const requests = allRequests?.filter(r => r.client_id === s.id) || [];
+              const plans = allPlans?.filter(p => p.client_id === s.id) || [];
+
+              return {
+                id: s.id,
+                name: profile.full_name,
+                email: profile.email,
+                avatar: profile.avatar_url,
+                unit: s.unit,
+                targetWeeklyRate: s.target_weekly_rate,
+                milestone: s.milestone,
+                milestoneAchieved: s.milestone_achieved,
+                weightEntries: entries.map((e: any) => ({
+                  id: e.id,
+                  date: e.date,
+                  weight: Number(e.weight),
+                  notes: e.notes,
+                  recordedBy: e.recorded_by,
+                  movingAverage: Number(e.moving_average),
+                  weeklyRate: Number(e.weekly_rate),
+                  excludeFromCalculations: e.exclude_from_calculations,
+                  isLowest: e.is_lowest,
+                  isHighest: e.is_highest,
+                  nutritionId: e.active_nutrition_id
+                })),
+                photoRequests: requests,
+                physiquePhotos: photos,
+                nutritionData: plans
+              };
+            });
+
+            // Find the coach's name
+            const { data: coachProfile } = await supabase.from('profiles').select('full_name').eq('id', effectiveCoachId).single();
+            setCoach({ id: effectiveCoachId, name: coachProfile?.full_name || 'Coach', clients: formattedClients });
+          }
+
+          // 3. Load Alerts
+          const { data: alertsData } = await supabase
+            .from('alerts')
+            .select('*')
+            .eq('coach_id', effectiveCoachId)
+            .order('date', { ascending: false });
+          
+          if (alertsData) setAlerts(alertsData as Alert[]);
+        }
+      }
+      setLoading(false);
     }
-    if (savedUser) {
-      setCurrentUser(JSON.parse(savedUser));
-    }
+
+    loadInitialData();
   }, []);
 
-  // Save to localStorage whenever data changes
+  // Real-time subscriptions
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.COACH_DATA, JSON.stringify(coach));
-  }, [coach]);
+    if (!currentUser || isMockMode.current) return;
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.ALERTS, JSON.stringify(alerts));
-  }, [alerts]);
+    const coachId = currentUser.role === 'coach' ? currentUser.id : null;
+    let effectiveCoachId = coachId;
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser));
-  }, [currentUser]);
+    const setupSubscriptions = async () => {
+      if (currentUser.role === 'client') {
+        const { data: settings } = await supabase.from('client_settings').select('coach_id').eq('id', currentUser.id).single();
+        effectiveCoachId = settings?.coach_id;
+      }
 
-  const addWeightEntry = (clientId: string, entry: Omit<WeightEntry, 'id'>) => {
-    setLoading(true);
-    
-    const newEntry: WeightEntry = {
-      ...entry,
-      id: Date.now().toString()
+      if (!effectiveCoachId) return;
+
+      // Listen for new alerts
+      const alertsChannel = supabase
+        .channel('public:alerts')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'alerts',
+          filter: `coach_id=eq.${effectiveCoachId}`
+        }, (payload: { eventType: string; new: Alert }) => {
+          if (payload.eventType === 'INSERT') {
+            setAlerts(prev => [payload.new, ...prev]);
+            toast.info('Nueva alerta recibida', {
+              description: payload.new.message
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setAlerts(prev => prev.map(a => a.id === payload.new.id ? { ...a, ...payload.new } : a));
+          }
+        })
+        .subscribe();
+
+      // Listen for weight entries (refresh logic)
+      const weightChannel = supabase
+        .channel('public:weight_entries')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'weight_entries'
+        }, (payload: { eventType: string; new: { client_id: string } }) => {
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            refreshClientData(payload.new.client_id);
+          }
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(alertsChannel);
+        supabase.removeChannel(weightChannel);
+      };
     };
 
-    setCoach(prevCoach => {
-      const updatedClients = prevCoach.clients.map(client => {
-        if (client.id === clientId) {
-          const updatedEntries = [...client.weightEntries, newEntry];
-          
-          // Sort entries by date for correct calculations
-          const sortedEntries = updatedEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          
-          // Calculate moving averages and weekly rates
-          const recalculatedEntries = recalculateAllWeeklyRates(sortedEntries);
-          
-          // Check for new lowest/highest weights
-          const { lowest, highest } = findLowestAndHighestWeights(recalculatedEntries);
-          const currentEntry = recalculatedEntries[recalculatedEntries.length - 1];
-          
-          // Generate alerts based on notification settings
-          const newAlerts: Alert[] = [];
-          
-          if ((client.notifyLowest !== false) && lowest && lowest.id === currentEntry.id) {
-            newAlerts.push({
-              id: `alert_${Date.now()}_lowest`,
-              clientId,
-              type: 'lowest',
-              message: `${client.name} has reached a new lowest weight: ${currentEntry.weight.toFixed(1)} ${client.unit}`,
-              date: currentEntry.date,
-              isRead: false
-            });
-          }
-          
-          if ((client.notifyHighest !== false) && highest && highest.id === currentEntry.id) {
-            newAlerts.push({
-              id: `alert_${Date.now()}_highest`,
-              clientId,
-              type: 'highest',
-              message: `${client.name} has reached a new highest weight: ${currentEntry.weight.toFixed(1)} ${client.unit}`,
-              date: currentEntry.date,
-              isRead: false
-            });
-          }
-          
-          // Check for rate deviation
-          if ((client.notifyRateDeviation !== false) && currentEntry.weeklyRate && checkRateDeviation(currentEntry.weeklyRate, client.targetWeeklyRate, 0.2)) {
-            newAlerts.push({
-              id: `alert_${Date.now()}_rate`,
-              clientId,
-              type: 'rate_deviation',
-              message: `${client.name}'s weekly rate (${currentEntry.weeklyRate > 0 ? '+' : ''}${currentEntry.weeklyRate.toFixed(2)} ${client.unit}) deviates from target (${client.targetWeeklyRate > 0 ? '+' : ''}${client.targetWeeklyRate.toFixed(1)} ${client.unit})`,
-              date: currentEntry.date,
-              isRead: false,
-              entryId: currentEntry.id
-            });
-          }
-          
-          // Check for milestone achievement
-          if (client.milestone && !client.milestoneAchieved) {
-            const milestoneReached = client.targetWeeklyRate < 0 
-              ? currentEntry.weight <= client.milestone
-              : currentEntry.weight >= client.milestone;
-              
-            if (milestoneReached) {
-              newAlerts.push({
-                id: `alert_${Date.now()}_milestone`,
-                clientId,
-                type: 'milestone_achieved',
-                message: `${client.name} has achieved their milestone: ${client.milestone.toFixed(1)} ${client.unit}`,
-                date: currentEntry.date,
-                isRead: false,
-                entryId: currentEntry.id
-              });
-              
-              // Update client milestone achieved status
-              client.milestoneAchieved = true;
-            }
-          }
-          
-          // Check for 7-day target rate streak
-          if (recalculatedEntries.length >= 7) {
-            const last7Entries = recalculatedEntries.slice(0, 7);
-            const tolerance = 0.2; // 20% tolerance
-            const allWithinTarget = last7Entries.every(entry => {
-              if (!entry.weeklyRate) return false;
-              return !checkRateDeviation(entry.weeklyRate, client.targetWeeklyRate, tolerance);
-            });
-            
-            if (allWithinTarget) {
-              newAlerts.push({
-                id: `alert_${Date.now()}_streak`,
-                clientId,
-                type: 'target_streak',
-                message: `${client.name} has maintained target rate for 7 consecutive days!`,
-                date: currentEntry.date,
-                isRead: false,
-                entryId: currentEntry.id
-              });
-            }
-          }
-          
-          // Add new alerts
-          if (newAlerts.length > 0) {
-            setAlerts(prevAlerts => [...prevAlerts, ...newAlerts]);
-          }
-          
-          return {
-            ...client,
-            weightEntries: recalculatedEntries
-          };
-        }
-        return client;
+    setupSubscriptions();
+  }, [currentUser]);
+
+  const addWeightEntry = async (clientId: string, entry: Omit<WeightEntry, 'id'>) => {
+    setLoading(true);
+
+    if (isMockMode.current) {
+      // Local-only: add entry to in-memory state
+      const newEntry: WeightEntry = {
+        ...entry,
+        id: `mock-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      };
+      setCoach((prev: Coach | null) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          clients: prev.clients.map((c: Client) =>
+            c.id === clientId
+              ? { ...c, weightEntries: [newEntry, ...c.weightEntries] }
+              : c
+          ),
+        };
+      });
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('weight_entries')
+      .insert({
+        client_id: clientId,
+        date: entry.date,
+        weight: entry.weight,
+        notes: entry.notes,
+        recorded_by: entry.recordedBy
       });
 
-      return {
-        ...prevCoach,
-        clients: updatedClients
-      };
-    });
-    
+    if (error) {
+      console.error('Error adding weight entry:', error);
+    } else {
+      await refreshClientData(clientId);
+    }
     setLoading(false);
   };
 
-  const updateWeightEntry = (clientId: string, entryId: string, updates: Partial<WeightEntry>, modifiedBy: 'coach' | 'client' = 'client') => {
-    setCoach(prevCoach => {
-      const updatedClients = prevCoach.clients.map(client => {
-        if (client.id === clientId) {
-          const originalEntry = client.weightEntries.find(e => e.id === entryId);
-          const updatedEntries = client.weightEntries.map(entry => 
-            entry.id === entryId ? { ...entry, ...updates } : entry
-          );
-          
-          // Sort entries by date for correct calculations
-          const sortedEntries = updatedEntries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          
-          // Calculate moving averages and weekly rates
-          const recalculatedEntries = recalculateAllWeeklyRates(sortedEntries);
-          
-          // Generate alert ONLY if coach modified weight (not just notes) and notifications enabled
-          const weightWasModified = updates.weight !== undefined && originalEntry && updates.weight !== originalEntry.weight;
-          if ((client.notifyWeightModified !== false) && modifiedBy === 'client' && weightWasModified && originalEntry) {
-            const alert: Alert = {
-              id: `alert_${Date.now()}_modified`,
-              clientId,
-              type: 'weight_modified',
-              message: `${client.name} modified a weight entry from ${originalEntry.weight.toFixed(1)} to ${updates.weight!.toFixed(1)} ${client.unit}`,
-              date: new Date().toISOString().split('T')[0],
-              isRead: false
-            };
-            
-            setAlerts(prevAlerts => [...prevAlerts, alert]);
-          }
-
-          // If coach modified weight, notify the client
-          if (modifiedBy === 'coach' && weightWasModified && originalEntry) {
-            const clientNotification = {
-              id: `notif_${Date.now()}`,
-              type: 'weight_modified' as const,
-              message: `Your coach modified your weight entry from ${originalEntry.weight.toFixed(1)} to ${updates.weight!.toFixed(1)} ${client.unit}`,
-              date: new Date().toISOString().split('T')[0],
-              isRead: false,
-              data: { originalWeight: originalEntry.weight, newWeight: updates.weight, date: originalEntry.date }
-            };
-
-            return {
-              ...client,
-              weightEntries: recalculatedEntries,
-              notifications: [...(client.notifications || []), clientNotification]
-            };
-          }
-          
-          return {
-            ...client,
-            weightEntries: recalculatedEntries
-          };
-        }
-        return client;
+  const updateWeightEntry = async (clientId: string, entryId: string, updates: Partial<WeightEntry>) => {
+    if (isMockMode.current) {
+      setCoach((prev: Coach | null) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          clients: prev.clients.map((c: Client) =>
+            c.id === clientId
+              ? {
+                  ...c,
+                  weightEntries: c.weightEntries.map((e: WeightEntry) =>
+                    e.id === entryId ? { ...e, ...updates } : e
+                  ),
+                }
+              : c
+          ),
+        };
       });
+      return;
+    }
 
+    const { error } = await supabase
+      .from('weight_entries')
+      .update({
+        weight: updates.weight,
+        notes: updates.notes,
+        exclude_from_calculations: updates.excludeFromCalculations
+      })
+      .eq('id', entryId);
+
+    if (!error) await refreshClientData(clientId);
+  };
+
+  const refreshClientData = async (clientId: string) => {
+    const { data: updatedEntries } = await supabase
+      .from('weight_entries')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('date', { ascending: false });
+
+    if (updatedEntries) {
+      setCoach((prev: Coach | null) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          clients: prev.clients.map((c: Client) => 
+            c.id === clientId ? { 
+              ...c, 
+              weightEntries: updatedEntries.map((e: any) => ({
+                id: e.id,
+                date: e.date,
+                weight: Number(e.weight),
+                notes: e.notes,
+                recordedBy: e.recorded_by,
+                movingAverage: Number(e.moving_average),
+                weeklyRate: Number(e.weekly_rate),
+                excludeFromCalculations: e.exclude_from_calculations,
+                isLowest: e.is_lowest,
+                isHighest: e.is_highest,
+                nutritionId: e.active_nutrition_id
+              }))
+            } : c
+          )
+        };
+      });
+    }
+  };
+
+  const updateTargetWeeklyRate = async (clientId: string, targetRate: number) => {
+    if (!isMockMode.current) {
+      const { error } = await supabase
+        .from('client_settings')
+        .update({ target_weekly_rate: targetRate })
+        .eq('id', clientId);
+      if (error) return;
+    }
+
+    setCoach((prev: Coach | null) => {
+      if (!prev) return prev;
       return {
-        ...prevCoach,
-        clients: updatedClients
+        ...prev,
+        clients: prev.clients.map((c: Client) => 
+          c.id === clientId ? { ...c, targetWeeklyRate: targetRate } : c
+        )
       };
     });
   };
 
-  const updateTargetWeeklyRate = (clientId: string, targetRate: number) => {
-    setCoach(prevCoach => ({
-      ...prevCoach,
-      clients: prevCoach.clients.map(client => {
-        if (client.id === clientId) {
-          const notification = {
-            id: `notif_${Date.now()}`,
-            type: 'target_rate_changed' as const,
-            message: `Your coach updated your target rate to ${targetRate > 0 ? '+' : ''}${targetRate.toFixed(1)} ${client.unit}/week`,
-            date: new Date().toISOString().split('T')[0],
-            isRead: false,
-            data: { oldTarget: client.targetWeeklyRate, newTarget: targetRate }
-          };
+  const updateNotificationSettings = async (clientId: string, settings: any) => {
+    if (!isMockMode.current) {
+      const { error } = await supabase
+        .from('client_settings')
+        .update({
+          notify_lowest: settings.notifyLowest,
+          notify_highest: settings.notifyHighest,
+          notify_rate_deviation: settings.notifyRateDeviation,
+          notify_weight_modified: settings.notifyWeightModified,
+          milestone: settings.milestone,
+          reminder_enabled: settings.reminderEnabled,
+          reminder_time: settings.reminderTime,
+          show_moving_average: settings.show_moving_average
+        })
+        .eq('id', clientId);
+      if (error) return;
+    }
 
-          return {
-            ...client,
-            targetWeeklyRate: targetRate,
-            notifications: [...(client.notifications || []), notification]
-          };
-        }
-        return client;
-      })
-    }));
+    setCoach((prev: Coach | null) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        clients: prev.clients.map((c: Client) => 
+          c.id === clientId ? { ...c, ...settings } : c
+        )
+      };
+    });
   };
 
-  const updateNotificationSettings = (clientId: string, settings: { notifyLowest?: boolean; notifyHighest?: boolean; notifyRateDeviation?: boolean; notifyWeightModified?: boolean; milestone?: number; reminderEnabled?: boolean; reminderTime?: string; showMovingAverage?: boolean; photoRequests?: any[] }) => {
-    setCoach(prevCoach => ({
-      ...prevCoach,
-      clients: prevCoach.clients.map(client =>
-        client.id === clientId ? { ...client, ...settings } : client
-      )
-    }));
-  };
-
-  const requestPhoto = (clientId: string, targetDate: string, viewType: 'front' | 'side' | 'back') => {
-    setCoach(prevCoach => ({
-      ...prevCoach,
-      clients: prevCoach.clients.map(client => {
-        if (client.id === clientId) {
-          const newRequest = {
-            id: `photo_req_${Date.now()}`,
-            requestedDate: new Date().toISOString().split('T')[0],
-            targetDate,
-            status: 'pending' as const,
-            viewType
-          };
-          
-          // Create example photo automatically
-          const examplePhoto = {
-            id: `photo_example_${Date.now()}`,
-            date: new Date().toISOString().split('T')[0],
-            photoUrl: 'https://images.unsplash.com/photo-1732535835521-8e8c30e47330?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmaXRuZXNzJTIwcHJvZ3Jlc3MlMjBtaXJyb3IlMjBwaG90b3xlbnwxfHx8fDE3NjAxMDIwMTh8MA&ixlib=rb-4.1.0&q=80&w=1080',
-            uploadedAt: new Date().toISOString(),
-            notes: 'This is an example photo showing proper form and lighting',
-            viewType,
-            isExample: true
-          };
-          
-          // Create notification for client
-          const notification = {
-            id: `notif_${Date.now()}`,
-            type: 'photo_requested' as const,
-            message: `Your coach has requested a ${viewType} view photo for ${new Date(targetDate).toLocaleDateString()}`,
-            date: new Date().toISOString().split('T')[0],
-            isRead: false,
-            data: { viewType, targetDate }
-          };
-          
-          return {
-            ...client,
-            photoRequests: [...(client.photoRequests || []), newRequest],
-            physiquePhotos: [...(client.physiquePhotos || []), examplePhoto],
-            notifications: [...(client.notifications || []), notification]
-          };
-        }
-        return client;
-      })
-    }));
-  };
-
-  const uploadPhoto = (clientId: string, photoUrl: string, notes: string, viewType?: 'front' | 'side' | 'back') => {
-    // Get client info before state update
-    const client = coach.clients.find(c => c.id === clientId);
-    if (!client) {
-      console.error('Client not found');
+  const requestPhoto = async (clientId: string, targetDate: string, viewType: 'front' | 'side' | 'back') => {
+    if (isMockMode.current) {
+      // Mock photo request
+      const newRequest: any = {
+        id: `req-${Date.now()}`,
+        targetDate,
+        viewType,
+        status: 'pending',
+        requestedDate: new Date().toISOString().split('T')[0]
+      };
+      setCoach((prev: Coach | null) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          clients: prev.clients.map((c: Client) =>
+            c.id === clientId
+              ? { ...c, photoRequests: [...(c.photoRequests || []), newRequest] }
+              : c
+          ),
+        };
+      });
       return;
     }
+
+    const { error } = await supabase
+      .from('photo_requests')
+      .insert({
+        coach_id: coach?.id,
+        client_id: clientId,
+        target_date: targetDate,
+        view_type: viewType,
+        status: 'pending'
+      });
+
+    if (!error) await refreshClientPhotos(clientId);
+  };
+
+  const refreshClientPhotos = async (clientId: string) => {
+    const { data: photos } = await supabase.from('physique_photos').select('*').eq('client_id', clientId);
+    const { data: requests } = await supabase.from('photo_requests').select('*').eq('client_id', clientId);
     
-    const today = new Date().toISOString().split('T')[0];
-    const todayDate = new Date(today);
-    const day = String(todayDate.getDate()).padStart(2, '0');
-    const month = String(todayDate.getMonth() + 1).padStart(2, '0');
-    const year = todayDate.getFullYear();
-    const dateFormatted = `${day}-${month}-${year}`;
-    
-    setCoach(prevCoach => ({
-      ...prevCoach,
-      clients: prevCoach.clients.map(c => {
-        if (c.id === clientId) {
-          const newPhoto = {
-            id: `photo_${Date.now()}`,
-            date: today,
-            photoUrl,
-            uploadedAt: new Date().toISOString(),
-            notes,
-            viewType,
-            isExample: false,
-            fileName: `${dateFormatted}_${viewType || 'photo'}.jpg`
-          };
-          
-          // Mark the corresponding photo request as completed (including declined ones)
-          const updatedRequests = (c.photoRequests || []).map(req => {
-            if ((req.status === 'pending' || req.status === 'declined') && req.viewType === viewType) {
-              return {
-                ...req,
-                status: 'completed' as const,
-                completedAt: new Date().toISOString(),
-                photoId: newPhoto.id
-              };
-            }
-            return req;
-          });
-          
-          return {
-            ...c,
-            physiquePhotos: [...(c.physiquePhotos || []), newPhoto],
-            photoRequests: updatedRequests
-          };
-        }
-        return c;
-      })
-    }));
-
-    // Create alert for coach
-    const newAlert: Alert = {
-      id: `alert_${Date.now()}`,
-      clientId,
-      type: 'photo_uploaded',
-      message: `${client.name} uploaded a ${viewType || 'physique'} photo`,
-      date: today,
-      isRead: false,
-      photoUrl
-    };
-
-    setAlerts(prev => [newAlert, ...prev]);
+    setCoach((prev: Coach | null) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        clients: prev.clients.map((c: Client) => 
+          c.id === clientId ? { ...c, physiquePhotos: photos || [], photoRequests: requests || [] } : c
+        )
+      };
+    });
   };
 
-  const markLowestWeight = (clientId: string, entryId: string) => {
-    updateWeightEntry(clientId, entryId, { isLowest: true });
-  };
-
-  const markHighestWeight = (clientId: string, entryId: string) => {
-    updateWeightEntry(clientId, entryId, { isHighest: true });
-  };
-
-  const markAlertAsRead = (alertId: string) => {
-    setAlerts(prevAlerts =>
-      prevAlerts.map(alert =>
-        alert.id === alertId ? { ...alert, isRead: true } : alert
-      )
-    );
-  };
-
-  const switchUser = (userId: string) => {
-    const user = mockUsers.find(u => u.id === userId);
-    if (user) {
-      setCurrentUser(user);
+  const uploadPhoto = async (clientId: string, photoUrl: string, notes: string, viewType?: 'front' | 'side' | 'back') => {
+    if (isMockMode.current) {
+      const newPhoto: any = {
+        id: `photo-${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        photoUrl,
+        viewType: viewType || 'front',
+        notes,
+        uploadedAt: new Date().toISOString()
+      };
+      setCoach((prev: Coach | null) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          clients: prev.clients.map((c: Client) =>
+            c.id === clientId
+              ? { ...c, physiquePhotos: [...(c.physiquePhotos || []), newPhoto] }
+              : c
+          ),
+        };
+      });
+      return;
     }
+
+    const { error } = await supabase
+      .from('physique_photos')
+      .insert({
+        client_id: clientId,
+        date: new Date().toISOString().split('T')[0],
+        photo_url: photoUrl,
+        view_type: viewType || 'front',
+        notes
+      });
+
+    if (!error) await refreshClientPhotos(clientId);
+  };
+
+  const markAlertAsRead = async (alertId: string) => {
+    if (!isMockMode.current) {
+      const { error } = await supabase
+        .from('alerts')
+        .update({ is_read: true })
+        .eq('id', alertId);
+      if (error) return;
+    }
+
+    setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, isRead: true } : a));
+  };
+
+  const initializeMockMode = async (accountIdOrUserId: string) => {
+    isMockMode.current = true;
+
+    // Determine which data set to load
+    const accountId = localStorage.getItem('kcaliper_account') || 'argo';
+
+    if (accountId === 'esteban') {
+      // Load Esteban's data
+      const clientsWithRates = estebanCoach.clients.map(client => ({
+        ...client,
+        weightEntries: recalculateAllWeeklyRates(client.weightEntries)
+      }));
+
+      setCoach({ ...estebanCoach, clients: clientsWithRates } as any);
+      setAlerts(estebanAlerts);
+
+      // Find user (could be coach or one of his clients)
+      const user = estebanUsers.find(u => u.id === accountIdOrUserId) || estebanUsers[0];
+      setCurrentUser(user as any);
+    } else {
+      // Default: load Carlos / Argo data
+      const selectedMockUser = mockUsers.find(u => u.id === accountIdOrUserId) || mockUsers[0];
+
+      const clientsWithRates = (mockUsers.length > 0 ? [mockUsers[0]] : []).map(u => ({
+         // This is a bit simplified, usually mockCoach has clients
+      }));
+
+      // Importing mockCoach from mock-data
+      const { mockCoach, mockAlerts } = await import('../utils/mock-data');
+
+      const clientsWithRatesFinal = mockCoach.clients.map(client => ({
+        ...client,
+        weightEntries: recalculateAllWeeklyRates(client.weightEntries)
+      }));
+
+      setCoach({ ...mockCoach, clients: clientsWithRatesFinal } as any);
+      setAlerts(mockAlerts);
+      setCurrentUser(selectedMockUser as any);
+    }
+
+    setLoading(false);
+  };
+
+  // Get the full users list for the current account (for UserSwitcher)
+  const getAvailableUsers = (): User[] => {
+    const accountId = localStorage.getItem('kcaliper_account') || 'argo';
+    return accountId === 'esteban' ? estebanUsers : mockUsers;
+  };
+
+  const switchUser = async (userId: string) => {
+    setLoading(true);
+    if (isMockMode.current) {
+      // Check both user lists
+      const allUsers = [...mockUsers, ...estebanUsers];
+      const mockUser = allUsers.find(u => u.id === userId);
+      if (mockUser) {
+        setCurrentUser(mockUser as any);
+        setLoading(false);
+        return;
+      }
+    }
+    
+    // Fallback to Supabase for production
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
+    if (profile) {
+      setCurrentUser(profile as User);
+    }
+    setLoading(false);
+  };
+
+  const addNutritionData = async (clientId: string, nutritionData: Omit<NutritionData, 'id'>) => {
+    if (isMockMode.current) {
+      const newNutrition = { ...nutritionData, id: `nutr-${Date.now()}` };
+      setCoach((prev: Coach | null) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          clients: prev.clients.map((c: Client) =>
+            c.id === clientId
+              ? { ...c, nutritionData: [...(c.nutritionData || []), newNutrition] }
+              : c
+          ),
+        };
+      });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('nutrition_plans')
+      .insert({
+        client_id: clientId,
+        start_date: nutritionData.startDate,
+        calories: nutritionData.calories,
+        protein: nutritionData.protein,
+        carbs: nutritionData.carbs,
+        fats: nutritionData.fats,
+        notes: nutritionData.notes
+      });
+
+    if (!error) await refreshClientData(clientId);
+  };
+
+  const markClientNotificationAsRead = async (clientId: string, notificationId: string) => {
+    if (isMockMode.current) {
+      setCoach((prev: Coach | null) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          clients: prev.clients.map((c: Client) =>
+            c.id === clientId
+              ? {
+                  ...c,
+                  notifications: (c.notifications || []).map((n: ClientNotification) =>
+                    n.id === notificationId ? { ...n, isRead: true } : n
+                  ),
+                }
+              : c
+          ),
+        };
+      });
+      return;
+    }
+
+    await supabase
+      .from('client_notifications')
+      .update({ is_read: true })
+      .eq('id', notificationId);
   };
 
   const getClientById = (clientId: string): Client | undefined => {
-    return coach.clients.find(client => client.id === clientId);
+    return coach?.clients.find(client => client.id === clientId);
   };
 
   const getCurrentClient = (): Client | undefined => {
-    if (currentUser.role === 'client') {
+    if (currentUser?.role === 'client') {
       return getClientById(currentUser.id);
     }
     return undefined;
-  };
-
-  const addNutritionData = (clientId: string, nutritionData: Omit<import('../types/weight-tracker').NutritionData, 'id'>) => {
-    setCoach(prevCoach => ({
-      ...prevCoach,
-      clients: prevCoach.clients.map(client => {
-        if (client.id === clientId) {
-          const newNutrition = {
-            ...nutritionData,
-            id: `nutrition_${Date.now()}`
-          };
-
-          // Update all weight entries from this date onwards with the new nutrition ID
-          const updatedEntries = client.weightEntries.map(entry => {
-            if (new Date(entry.date) >= new Date(nutritionData.startDate)) {
-              return { ...entry, nutritionId: newNutrition.id };
-            }
-            return entry;
-          });
-
-          return {
-            ...client,
-            nutritionData: [...(client.nutritionData || []), newNutrition],
-            weightEntries: updatedEntries
-          };
-        }
-        return client;
-      })
-    }));
-  };
-
-  const markClientNotificationAsRead = (clientId: string, notificationId: string) => {
-    setCoach(prevCoach => ({
-      ...prevCoach,
-      clients: prevCoach.clients.map(client => {
-        if (client.id === clientId) {
-          return {
-            ...client,
-            notifications: (client.notifications || []).map(notif =>
-              notif.id === notificationId ? { ...notif, isRead: true } : notif
-            )
-          };
-        }
-        return client;
-      })
-    }));
   };
 
   const unreadAlerts = alerts.filter(alert => !alert.isRead);
@@ -483,8 +610,8 @@ export function useWeightTracker() {
     addWeightEntry,
     updateWeightEntry,
     updateTargetWeeklyRate,
-    markLowestWeight,
-    markHighestWeight,
+    markLowestWeight: (clientId: string, entryId: string) => updateWeightEntry(clientId, entryId, { isLowest: true } as any),
+    markHighestWeight: (clientId: string, entryId: string) => updateWeightEntry(clientId, entryId, { isHighest: true } as any),
     markAlertAsRead,
     updateNotificationSettings,
     requestPhoto,
@@ -492,6 +619,33 @@ export function useWeightTracker() {
     addNutritionData,
     markClientNotificationAsRead,
     switchUser,
+    getAvailableUsers,
+    joinCoach: async (coachId: string) => {
+      if (!currentUser) return;
+      
+      setLoading(true);
+      try {
+        // Create client settings
+        const { error: settingsError } = await supabase
+          .from('client_settings')
+          .insert({
+            id: currentUser.id,
+            coach_id: coachId,
+            unit: 'kg',
+            target_weekly_rate: -0.5
+          });
+          
+        if (settingsError) throw settingsError;
+        
+        // Refresh to trigger loadUserData logic for the newly linked client
+        window.location.reload(); 
+      } catch (e: any) {
+        toast.error('Error linking to coach');
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    },
     getClientById,
     getCurrentClient
   };

@@ -14,10 +14,10 @@ import { Badge } from './ui/badge';
 import { Switch } from './ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
-import { calculateMovingAverage } from '../utils/weight-calculations';
+import { calculateDoubleExponentialMovingAverage, calculateWeeklyRate } from '../utils/weight-calculations';
 import { Users, Scale, Settings, ChevronDown, ChevronUp, BookOpen, PlayCircle, Info, Camera, MoreVertical } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { toast } from 'sonner@2.0.3';
+import { toast, Toaster } from 'sonner';
 
 interface CoachDashboardProps {
   coach: Coach;
@@ -29,7 +29,7 @@ interface CoachDashboardProps {
   onUpdateTargetRate: (clientId: string, targetRate: number) => void;
   onMarkAlertAsRead: (alertId: string) => void;
   onUpdateNotificationSettings?: (clientId: string, settings: { notifyLowest?: boolean; notifyHighest?: boolean; milestone?: number }) => void;
-  onRequestPhoto?: (clientId: string, targetDate: string) => void;
+  onRequestPhoto?: (clientId: string, targetDate: string, viewType: 'front' | 'side' | 'back') => void;
 }
 
 export function CoachDashboard({
@@ -148,13 +148,14 @@ export function CoachDashboard({
     }
     
     const sortedEntries = [...client.weightEntries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    const movingAverage = calculateMovingAverage(sortedEntries, 0);
+    const movingAverage = calculateDoubleExponentialMovingAverage(sortedEntries, 0);
+    const weeklyRate = calculateWeeklyRate(sortedEntries, 0);
     const latestEntry = sortedEntries[0];
 
     return {
       currentWeight: latestEntry?.weight || 0,
       movingAverage,
-      weeklyRate: latestEntry?.weeklyRate || 0,
+      weeklyRate: weeklyRate !== 0 ? weeklyRate : (latestEntry?.weeklyRate || 0),
       lastWeighed: latestEntry?.date || null,
       entriesCount: client.weightEntries.length
     };
@@ -209,12 +210,16 @@ export function CoachDashboard({
                   return (
                     <div
                       key={client.id}
-                      className="p-3 sm:p-2 border-b sm:border sm:rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 dark:border-gray-800 transition-colors cursor-pointer relative"
+                      className="p-4 mb-3 border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-md dark:border-gray-700 transition-all cursor-pointer relative overflow-hidden group"
                       onClick={() => {
                         setSelectedClient(client);
-                        setShowChart(false);
+                        setShowChart(true);
                       }}
                     >
+                      {/* Decorative gradient corner for 'Lowest' players */}
+                      {client.weightEntries.some(e => e.isLowest) && (
+                        <div className="absolute -top-6 -right-6 w-12 h-12 bg-green-500 rotate-45 opacity-20" />
+                      )}
 
                       
                       {/* Mobile Layout: Vertical */}
@@ -243,23 +248,18 @@ export function CoachDashboard({
                         
                         {/* Badges row */}
                         <div className="flex items-center gap-2 text-xs flex-wrap">
-                          <Badge variant="outline" className="gap-1 h-6 bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900">
-                            <span className="text-blue-600 dark:text-blue-400 font-medium">Weight</span>
-                            <span className="font-semibold text-gray-900 dark:text-gray-100">{stats.currentWeight.toFixed(1)} {client.unit}</span>
+                          <Badge variant="outline" className="gap-1 h-6 bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-900 border-0 rounded-full">
+                            <Scale className="w-3 h-3 text-blue-500" />
+                            <span className="font-bold text-gray-900 dark:text-gray-100">{stats.currentWeight.toFixed(1)} {client.unit}</span>
                           </Badge>
                           
-                          <Badge variant="outline" className="gap-1 h-6 bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900">
-                            <span className="text-amber-600 dark:text-amber-400 font-medium">Target</span>
-                            <span className="font-semibold text-gray-900 dark:text-gray-100">{client.targetWeeklyRate > 0 ? '+' : ''}{client.targetWeeklyRate.toFixed(1)}</span>
+                          <Badge variant="outline" className={`gap-1 h-6 border-0 rounded-full ${stats.weeklyRate < 0 ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'}`}>
+                            <span className="font-bold">{stats.weeklyRate > 0 ? '+' : ''}{stats.weeklyRate.toFixed(2)} {client.unit}</span>
                           </Badge>
                           
-                          {client.milestone && (
-                            <Badge variant="outline" className="gap-1 h-6 bg-purple-50 border-purple-300 dark:bg-purple-950/30 dark:border-purple-900">
-                              <span className="text-purple-600 dark:text-purple-400 font-medium">Milestone</span>
-                              <span className={client.milestoneAchieved ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-purple-700 dark:text-purple-300 font-semibold'}>
-                                {client.milestone.toFixed(1)} {client.unit}
-                                {client.milestoneAchieved && ' ✓'}
-                              </span>
+                          {client.weightEntries.some(e => e.isLowest) && (
+                            <Badge className="h-6 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-0 font-bold rounded-full animate-pulse">
+                              LOWEST ✨
                             </Badge>
                           )}
                         </div>
@@ -602,42 +602,22 @@ export function CoachDashboard({
                 )}
               </div>
 
-              {/* Weight Chart - HIDDEN (can be re-enabled later) 
-              <div className="flex justify-between items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowChart(!showChart)}
-                  className="gap-2"
-                >
-                  {showChart ? (
-                    <>
-                      <ChevronUp className="w-4 h-4" />
-                      Hide Chart
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown className="w-4 h-4" />
-                      Show Chart
-                    </>
-                  )}
-                </Button>
-              </div>
-
               {showChart && selectedClient.weightEntries.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Weight Trend</CardTitle>
+                <Card className="border-0 shadow-none bg-transparent">
+                  <CardHeader className="px-0 sm:px-6">
+                    <CardTitle className="text-sm font-medium text-gray-500 uppercase tracking-widest">Tendencia de Peso</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <WeightChart 
-                      entries={selectedClient.weightEntries} 
-                      unit={selectedClient.unit}
-                      showMovingAverage={true}
-                    />
+                  <CardContent className="px-0 sm:px-6">
+                    <div className="h-[250px] w-full">
+                      <WeightChart 
+                        entries={selectedClient.weightEntries} 
+                        unit={selectedClient.unit}
+                        showMovingAverage={true}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               )}
-              End of hidden chart section */}
 
               {/* Weight Entries Table */}
               {selectedClient.weightEntries.length > 0 && (
@@ -669,10 +649,10 @@ export function CoachDashboard({
           open={photoRequestDialogOpen}
           onOpenChange={setPhotoRequestDialogOpen}
           clientName={selectedClient.name}
-          onSubmit={(targetDate) => {
-            onRequestPhoto(selectedClient.id, targetDate);
+          onSubmit={(targetDate, viewType) => {
+            onRequestPhoto(selectedClient.id, targetDate, viewType);
             toast.success('Photo request sent', {
-              description: `${selectedClient.name} will be prompted to upload a photo on ${new Date(targetDate).toLocaleDateString()}`
+              description: `${selectedClient.name} will be prompted to upload a photo (${viewType}) on ${new Date(targetDate).toLocaleDateString()}`
             });
           }}
         />

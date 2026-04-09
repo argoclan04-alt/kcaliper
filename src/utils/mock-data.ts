@@ -141,6 +141,15 @@ const client5Entries: WeightEntry[] = [
   { id: 'e6', date: '2025-10-03', weight: 185.5, notes: '', recordedBy: 'client' }
 ];
 
+// Mock weight entries for Gerard (Client 9)
+const gerardEntries: WeightEntry[] = generateWeightData(
+  '2024-07-01',
+  '2025-11-02',
+  92.0,
+  84.5,
+  'gd'
+);
+
 // Mock weight entries for Client 6 - No recent entries (inactive)
 const client6Entries: WeightEntry[] = [
   { id: 'f1', date: '2025-10-03', weight: 68.5, notes: '', recordedBy: 'client' },
@@ -304,6 +313,31 @@ export const mockClients: Client[] = [
     showMovingAverage: true,
     physiquePhotos: [],
     photoRequests: []
+  },
+  {
+    id: 'client9',
+    name: 'Gerard Posing',
+    email: 'gerard@example.com',
+    unit: 'kg',
+    country: 'Spain',
+    targetWeeklyRate: -0.4,
+    weightEntries: gerardEntries,
+    createdAt: '2024-07-01',
+    notifyLowest: true,
+    notifyHighest: false,
+    timezone: 'Europe/Madrid',
+    showMovingAverage: true,
+    physiquePhotos: [
+      {
+        id: 'p1',
+        date: '2025-11-01',
+        photoUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?fit=crop&w=800&q=80',
+        viewType: 'front',
+        notes: 'Checking posing and progress',
+        uploadedAt: '2025-11-01T10:00:00Z'
+      }
+    ],
+    photoRequests: []
   }
 ];
 
@@ -441,6 +475,13 @@ export const mockUsers: User[] = [
     id: 'client8',
     name: 'Michael Chen',
     email: 'michael@example.com',
+    role: 'client',
+    coachId: 'coach1'
+  },
+  {
+    id: 'client9',
+    name: 'Gerard Posing',
+    email: 'gerard@example.com',
     role: 'client',
     coachId: 'coach1'
   }

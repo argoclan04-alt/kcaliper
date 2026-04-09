@@ -15,6 +15,8 @@ import { MobileNotificationsButton } from './MobileNotificationsButton';
 import { PhotoRequestWarning } from './PhotoRequestWarning';
 import { PhotoUploadDialog } from './PhotoUploadDialog';
 import { EditNotesDialog } from './EditNotesDialog';
+import { ScannerOverlay } from './ScannerOverlay';
+import { Camera as CameraIcon } from 'lucide-react';
 
 interface LogbookProps {
   entries: WeightEntry[];
@@ -59,6 +61,7 @@ export function Logbook({
   const [editNotesDate, setEditNotesDate] = useState('');
   const [showPhotosMode, setShowPhotosMode] = useState(false);
   const [selectedPhotoEntry, setSelectedPhotoEntry] = useState<WeightEntry | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   // Sort entries by date (most recent first)
   const sortedEntries = [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -411,14 +414,25 @@ export function Logbook({
             </div>
             <div className="space-y-2">
               <Label className="text-gray-900 dark:text-white">Peso ({unit})</Label>
-              <Input
-                type="number"
-                step="0.1"
-                value={newWeight}
-                onChange={(e) => setNewWeight(e.target.value)}
-                placeholder="70.0"
-                autoFocus
-              />
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={newWeight}
+                  onChange={(e) => setNewWeight(e.target.value)}
+                  placeholder="70.0"
+                  className="flex-1"
+                  autoFocus
+                />
+                <Button 
+                  variant="outline" 
+                  className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400"
+                  onClick={() => setShowScanner(true)}
+                >
+                  <CameraIcon className="w-4 h-4 mr-2" />
+                  Scanner
+                </Button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-gray-900 dark:text-white">Notas (opcional)</Label>
@@ -682,6 +696,16 @@ export function Logbook({
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {showScanner && (
+        <ScannerOverlay 
+          onScan={(weight) => {
+            setNewWeight(weight.toString());
+            toast.success(`Peso detectado: ${weight} ${unit}`);
+          }}
+          onClose={() => setShowScanner(false)}
+        />
       )}
     </div>
   );
