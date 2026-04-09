@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Coach, Client } from '../types/weight-tracker';
 import { WeightChart } from './WeightChart';
 import { WeightEntryTable } from './WeightEntryTable';
@@ -49,6 +49,21 @@ export function CoachDashboard({
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [photoRequestDialogOpen, setPhotoRequestDialogOpen] = useState(false);
   const [showChart, setShowChart] = useState(false);
+
+  // Sync selectedClient with the latest data from the coach prop
+  // This ensures that when we update settings or add weights, the modal UI updates immediately
+  // without needing to be closed and reopened.
+  useEffect(() => {
+    if (selectedClient) {
+      const updatedClient = coach.clients.find(c => c.id === selectedClient.id);
+      if (updatedClient) {
+        // Deep compare or just set if we assume coach only changes when something inside changes
+        setSelectedClient(updatedClient);
+      } else {
+        setSelectedClient(null);
+      }
+    }
+  }, [coach.clients]);
 
   const handleUpdateTargetRate = (clientId: string, clientName: string) => {
     const value = parseFloat(targetRateInput);
@@ -253,7 +268,11 @@ export function CoachDashboard({
                             <span className="font-bold text-gray-900 dark:text-gray-100">{stats.currentWeight.toFixed(1)} {client.unit}</span>
                           </Badge>
                           
-                          <Badge variant="outline" className={`gap-1 h-6 border-0 rounded-full ${stats.weeklyRate < 0 ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'}`}>
+                          <Badge variant="outline" className={`gap-1 h-6 border-0 rounded-full ${
+                            (client.targetWeeklyRate < 0 ? stats.weeklyRate <= 0.05 : stats.weeklyRate >= -0.05) 
+                              ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' 
+                              : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                          }`}>
                             <span className="font-bold">{stats.weeklyRate > 0 ? '+' : ''}{stats.weeklyRate.toFixed(2)} {client.unit}</span>
                           </Badge>
                           
@@ -306,7 +325,7 @@ export function CoachDashboard({
                               <span className={
                                 isRateOutOfRange(stats.weeklyRate, client.targetWeeklyRate)
                                   ? 'text-red-600 dark:text-red-400 font-semibold'
-                                  : stats.weeklyRate > 0 ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-green-600 dark:text-green-400 font-semibold'
+                                  : (client.targetWeeklyRate < 0 ? stats.weeklyRate <= 0.05 : stats.weeklyRate >= -0.05) ? 'text-green-600 dark:text-green-400 font-semibold' : 'text-red-600 dark:text-red-400 font-semibold'
                               }>
                                 {stats.weeklyRate > 0 ? '+' : ''}{stats.weeklyRate.toFixed(2)}
                               </span>
