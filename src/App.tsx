@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useWeightTracker } from './hooks/useWeightTracker';
 import { CoachDashboard } from './components/CoachDashboard';
 import { Logbook } from './components/Logbook';
@@ -30,28 +31,16 @@ import { OnboardingWizard } from './components/pages/OnboardingWizard';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
 
 
-/* ============ URL ROUTER HOOK ============ */
-function useRouter() {
-  const [path, setPath] = useState(window.location.pathname);
+export default function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const path = location.pathname;
 
-  useEffect(() => {
-    const handlePopState = () => setPath(window.location.pathname);
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, []);
-
-  const navigate = (to: string) => {
-    window.history.pushState({}, '', to);
-    setPath(to);
+  const handleNavigate = (to: string) => {
+    navigate(to);
     window.scrollTo({ top: 0 });
   };
 
-  return { path, navigate };
-}
-
-
-export default function App() {
-  const { path, navigate } = useRouter();
   const [showDocumentation, setShowDocumentation] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -184,10 +173,7 @@ export default function App() {
     }
   };
 
-  // Navigation handler for sub-pages
-  const handleNavigate = (page: string) => {
-    navigate(`/${page}`);
-  };
+
 
   // ===== ROUTING =====
 
