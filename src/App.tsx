@@ -13,9 +13,9 @@ import { SplashScreen } from './components/SplashScreen';
 import { AthleteEmptyState } from './components/AthleteEmptyState';
 import { CaliBotResponse } from './components/CaliBotResponse';
 
-import { LandingPage } from './components/LandingPage';
+import { LandingPage as LegacyLandingPage } from './components/LandingPage';
 import { EarlyAccessPage } from './components/EarlyAccessPage';
-import AppV2 from './v2/App';
+import AppV2, { LandingPage as V2LandingPage, CoachesLandingPage as V2CoachesPage, NosotrosPage as V2NosotrosPage } from './v2/App';
 import { AuthPage } from './components/AuthPage';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
@@ -348,6 +348,17 @@ export default function App() {
     );
   }
 
-  // Default: Main landing page (athletes) - v2 is now default
-  return <AppV2 />;
+  // v2 Branding Pages
+  if (path === '/' || path === '') {
+    return <AppV2><V2LandingPage /></AppV2>;
+  }
+  if (path === '/coaches') {
+    return <AppV2><V2CoachesPage /></AppV2>;
+  }
+  if (path === '/nosotros') {
+    return <AppV2><V2NosotrosPage /></AppV2>;
+  }
+
+  // Fallback to v2 Home if no other route matches
+  return <AppV2><V2LandingPage /></AppV2>;
 }
