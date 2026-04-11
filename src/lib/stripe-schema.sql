@@ -33,39 +33,53 @@ CREATE POLICY "Super admin view all purchases" ON stripe_purchases
 
 -- Database Trigger to Auto-Assign PRO Status on Account Creation
 -- When a user registers, we check if they have unclaimed purchases matching their email
-CREATE OR REPLACE FUNCTION check_pending_stripe_purchases()
+-- 1. Sync Metadata BEFORE the profile is created (sets role/plan on NEW)
+CREATE OR REPLACE FUNCTION sync_stripe_profile_metadata()
 RETURNS TRIGGER AS $$
 DECLARE
   pending_purchase RECORD;
 BEGIN
-  -- Check if this new user has bought something before creating account
   SELECT * INTO pending_purchase 
   FROM stripe_purchases 
   WHERE customer_email = NEW.email AND claimed = FALSE 
   LIMIT 1;
 
   IF FOUND THEN
-    -- Assign role and plan based on plan_type string derived from Stripe Price ID
     IF pending_purchase.plan_type ILIKE '%coach%' THEN
       NEW.role := 'coach';
     ELSE
       NEW.role := 'athlete';
     END IF;
-
-    NEW.plan := 'pro';
-    NEW.status := 'active';
-
-    -- Mark purchase as claimed
-    UPDATE stripe_purchases SET claimed = TRUE, user_id = NEW.id WHERE id = pending_purchase.id;
+    -- NEW.plan := 'pro'; -- Assuming a 'plan' column exists in profiles
   END IF;
 
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create Trigger on INSERT to PROFILES
-DROP TRIGGER IF EXISTS trigger_check_stripe_purchases ON profiles;
-CREATE TRIGGER trigger_check_stripe_purchases
+-- 2. Link the purchase AFTER the profile is created (ID now exists in profiles)
+CREATE OR REPLACE FUNCTION link_claimed_stripe_purchase()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE stripe_purchases 
+  SET claimed = TRUE, 
+      user_id = NEW.id,
+      updated_at = NOW()
+  WHERE customer_email = NEW.email AND claimed = FALSE;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create Triggers
+DROP TRIGGER IF EXISTS trigger_sync_stripe_metadata ON profiles;
+CREATE TRIGGER trigger_sync_stripe_metadata
   BEFORE INSERT ON profiles
   FOR EACH ROW
-  EXECUTE FUNCTION check_pending_stripe_purchases();
+  EXECUTE FUNCTION sync_stripe_profile_metadata();
+
+DROP TRIGGER IF EXISTS trigger_link_stripe_purchase ON profiles;
+CREATE TRIGGER trigger_link_stripe_purchase
+  AFTER INSERT ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION link_claimed_stripe_purchase();

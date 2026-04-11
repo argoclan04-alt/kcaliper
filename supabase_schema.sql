@@ -11,7 +11,7 @@ DROP TYPE IF EXISTS weight_unit CASCADE;
 DROP TYPE IF EXISTS photo_view_type CASCADE;
 DROP TYPE IF EXISTS photo_request_status CASCADE;
 
-CREATE TYPE user_role AS ENUM ('coach', 'client');
+CREATE TYPE user_role AS ENUM ('coach', 'client', 'super_admin');
 CREATE TYPE weight_unit AS ENUM ('kg', 'lbs');
 CREATE TYPE photo_view_type AS ENUM ('front', 'side', 'back');
 CREATE TYPE photo_request_status AS ENUM ('pending', 'completed', 'overdue', 'declined');
