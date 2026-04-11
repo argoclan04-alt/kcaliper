@@ -6,7 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useWaitlist } from '../../../hooks/useWaitlist';
 
 const FinalCTA = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);

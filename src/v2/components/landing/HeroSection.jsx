@@ -7,7 +7,7 @@ import ParticleBackground from './ParticleBackground';
 import { useWaitlist } from '../../../hooks/useWaitlist';
 
 const HeroSection = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [email, setEmail] = useState('');
   const [waitlistCount, setWaitlistCount] = useState(847);
   const [isSubmitting, setIsSubmitting] = useState(false);
