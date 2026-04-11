@@ -109,7 +109,8 @@ export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) 
       }, 300);
     } else {
       localStorage.setItem('kcaliper_onboarding_done', 'true');
-      onComplete();
+      window.history.pushState({}, '', '/signup');
+      window.dispatchEvent(new PopStateEvent('popstate'));
     }
   };
 
@@ -434,11 +435,19 @@ export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) 
            </div>
 
            <div className="pt-6 flex flex-col items-center">
-              <a href="https://buy.stripe.com/fZueVd6t52Xm31dabi3ZK07" className="flex items-center justify-center w-full h-14 rounded-full bg-gradient-to-r from-[var(--fp-violet)] to-[var(--fp-cyan)] hover:opacity-90 font-bold text-white shadow-lg transition-transform hover:scale-[1.02]">
-                Proceder al Checkout
-              </a>
-              <button onClick={onComplete} className="mt-4 text-[10px] text-gray-600 hover:text-gray-400 underline transition-colors uppercase tracking-wider">
-                demo test (entrar a la app)
+              <button onClick={() => {
+                localStorage.setItem('kcaliper_onboarding_done', 'true');
+                window.history.pushState({}, '', '/signup');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+              }} className="flex items-center justify-center w-full h-14 rounded-full bg-gradient-to-r from-[var(--fp-violet)] to-[var(--fp-cyan)] hover:opacity-90 font-bold text-white shadow-lg transition-transform hover:scale-[1.02]">
+                Crear mi Cuenta (VIP)
+              </button>
+              <button onClick={() => {
+                 localStorage.setItem('kcaliper_onboarding_done', 'true');
+                 window.history.pushState({}, '', '/login');
+                 window.dispatchEvent(new PopStateEvent('popstate'));
+              }} className="mt-4 text-[10px] text-gray-600 hover:text-gray-400 underline transition-colors uppercase tracking-wider">
+                Ya tengo cuenta · Iniciar sesión
               </button>
            </div>
         </div>

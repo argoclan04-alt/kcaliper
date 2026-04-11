@@ -17,8 +17,8 @@ import { LandingPage } from './components/LandingPage';
 import { CoachLandingPage } from './components/CoachLandingPage';
 import { ElegantLandingPage } from './components/ElegantLandingPage';
 import { EarlyAccessPage } from './components/EarlyAccessPage';
-import { LoginPage } from './components/LoginPage';
 import AppV2 from './v2/App';
+import { AuthPage } from './components/AuthPage';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
@@ -226,13 +226,17 @@ export default function App() {
     return <EarlyAccessPage onNavigate={handleNavigate} />;
   }
 
-  // Login Page
-  if (path === '/login') {
-    return <LoginPage onNavigate={handleNavigate} />;
+  // Unified Auth Page
+  if (path === '/login' || path === '/auth') {
+    return <AuthPage initialMode="login" />;
+  }
+
+  if (path === '/signup') {
+    return <AuthPage initialMode="signup" />;
   }
 
   if (path === '/reset-password') {
-    return <ResetPasswordPage />;
+    return <AuthPage initialMode="reset" />;
   }
 
   // Onboarding VIP Flow
