@@ -14,8 +14,6 @@ import { AthleteEmptyState } from './components/AthleteEmptyState';
 import { CaliBotResponse } from './components/CaliBotResponse';
 
 import { LandingPage } from './components/LandingPage';
-import { CoachLandingPage } from './components/CoachLandingPage';
-import { ElegantLandingPage } from './components/ElegantLandingPage';
 import { EarlyAccessPage } from './components/EarlyAccessPage';
 import AppV2 from './v2/App';
 import { AuthPage } from './components/AuthPage';
@@ -210,16 +208,6 @@ export default function App() {
     return <BecomeInfluencerPage onNavigate={handleNavigate} />;
   }
 
-
-  // Coach landing
-  if (path === '/coach') {
-    return <CoachLandingPage onNavigate={handleNavigate} />;
-  }
-
-  // Elegant Landing page
-  if (path === '/landing-elegant') {
-    return <ElegantLandingPage onNavigate={handleNavigate} />;
-  }
 
   // Early access (post-signup)
   if (path === '/early-access') {
