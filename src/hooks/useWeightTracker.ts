@@ -43,101 +43,139 @@ export function useWeightTracker() {
         .eq('id', userId)
         .single();
       
-      if (profile) {
-        setCurrentUser(profile as User);
-
-        // 2. Load Coach Data (Clients, Settings, etc.)
-        const coachId = profile.role === 'coach' ? profile.id : null;
-        
-        // If client, we need to know their coach to fetch fellow clients or just self
-        let effectiveCoachId = coachId;
-        if (profile.role === 'client') {
-          const { data: settings } = await supabase.from('client_settings').select('coach_id').eq('id', userId).single();
-          effectiveCoachId = settings?.coach_id;
-        }
-
-        if (effectiveCoachId) {
-          // 1. Fetch Client Settings (to get the list of athletes)
-          const { data: clientsSettings, error: settingsError } = await supabase
-            .from('client_settings')
-            .select('*')
-            .eq('coach_id', effectiveCoachId);
-
-          // FALLBACK MOCK DATA: If no settings found or error (e.g. RLS blocking bypass)
-          if (!clientsSettings || clientsSettings.length === 0) {
-             console.warn("No real data found for userId. Using Mock Data Fallback.");
-             await initializeMockMode(userId);
-             return;
-          }
-
-          if (clientsSettings && clientsSettings.length > 0) {
-            const clientIds = clientsSettings.map(s => s.id);
-
-            // 2. Parallel fetch all related data for these clients (No nested joins)
-            const [
-              { data: clientProfiles },
-              { data: allEntries },
-              { data: allPhotos },
-              { data: allRequests },
-              { data: allPlans }
-            ] = await Promise.all([
-              supabase.from('profiles').select('*').in('id', clientIds),
-              supabase.from('weight_entries').select('*').in('client_id', clientIds).order('date', { ascending: false }),
-              supabase.from('physique_photos').select('*').in('client_id', clientIds),
-              supabase.from('photo_requests').select('*').in('client_id', clientIds),
-              supabase.from('nutrition_plans').select('*').in('client_id', clientIds)
-            ]);
-
-            const formattedClients = clientsSettings.map((s: any) => {
-              const profile = clientProfiles?.find(p => p.id === s.id) || {};
-              const entries = allEntries?.filter(e => e.client_id === s.id) || [];
-              const photos = allPhotos?.filter(p => p.client_id === s.id) || [];
-              const requests = allRequests?.filter(r => r.client_id === s.id) || [];
-              const plans = allPlans?.filter(p => p.client_id === s.id) || [];
-
-              return {
-                id: s.id,
-                name: profile.full_name,
-                email: profile.email,
-                avatar: profile.avatar_url,
-                unit: s.unit,
-                targetWeeklyRate: s.target_weekly_rate,
-                milestone: s.milestone,
-                milestoneAchieved: s.milestone_achieved,
-                weightEntries: entries.map((e: any) => ({
-                  id: e.id,
-                  date: e.date,
-                  weight: Number(e.weight),
-                  notes: e.notes,
-                  recordedBy: e.recorded_by,
-                  movingAverage: Number(e.moving_average),
-                  weeklyRate: Number(e.weekly_rate),
-                  excludeFromCalculations: e.exclude_from_calculations,
-                  isLowest: e.is_lowest,
-                  isHighest: e.is_highest,
-                  nutritionId: e.active_nutrition_id
-                })),
-                photoRequests: requests,
-                physiquePhotos: photos,
-                nutritionData: plans
-              };
-            });
-
-            // Find the coach's name
-            const { data: coachProfile } = await supabase.from('profiles').select('full_name').eq('id', effectiveCoachId).single();
-            setCoach({ id: effectiveCoachId, name: coachProfile?.full_name || 'Coach', clients: formattedClients });
-          }
-
-          // 3. Load Alerts
-          const { data: alertsData } = await supabase
-            .from('alerts')
-            .select('*')
-            .eq('coach_id', effectiveCoachId)
-            .order('date', { ascending: false });
-          
-          if (alertsData) setAlerts(alertsData as Alert[]);
-        }
+      if (!profile) {
+        setLoading(false);
+        return;
       }
+      
+      // CHECK IF ACCOUNT IS AN INFLUENCER OR DEMO (Seeds the mock data)
+      const { data: influencer } = await supabase
+        .from('influencers')
+        .select('email')
+        .eq('email', profile.email)
+        .maybeSingle();
+
+      const isInfluencer = !!influencer || profile.email.includes('esteban@');
+
+      if (isInfluencer) {
+        console.log("Influencer Account Detected! Seeding Mock Data...");
+        await initializeMockMode(userId, true, profile.full_name, profile.email);
+        return;
+      }
+
+      setCurrentUser(profile as User);
+
+      // 2. Separate logic by Role
+      if (profile.role === 'coach') {
+        const coachId = profile.id;
+        const { data: clientsSettings } = await supabase.from('client_settings').select('*').eq('coach_id', coachId);
+        
+        let formattedClients: any[] = [];
+        
+        if (clientsSettings && clientsSettings.length > 0) {
+          const clientIds = clientsSettings.map(s => s.id);
+
+          const [
+            { data: clientProfiles },
+            { data: allEntries },
+            { data: allPhotos },
+            { data: allRequests },
+            { data: allPlans }
+          ] = await Promise.all([
+            supabase.from('profiles').select('*').in('id', clientIds),
+            supabase.from('weight_entries').select('*').in('client_id', clientIds).order('date', { ascending: false }),
+            supabase.from('physique_photos').select('*').in('client_id', clientIds),
+            supabase.from('photo_requests').select('*').in('client_id', clientIds),
+            supabase.from('nutrition_plans').select('*').in('client_id', clientIds)
+          ]);
+
+          formattedClients = clientsSettings.map((s: any) => {
+            const cProf = clientProfiles?.find(p => p.id === s.id) || {};
+            const entries = allEntries?.filter(e => e.client_id === s.id) || [];
+            const photos = allPhotos?.filter(p => p.client_id === s.id) || [];
+            const requests = allRequests?.filter(r => r.client_id === s.id) || [];
+            const plans = allPlans?.filter(p => p.client_id === s.id) || [];
+
+            return {
+              id: s.id,
+              name: cProf.full_name || 'Atleta',
+              email: cProf.email,
+              avatar: cProf.avatar_url,
+              unit: s.unit || 'kg',
+              targetWeeklyRate: s.target_weekly_rate,
+              milestone: s.milestone,
+              milestoneAchieved: s.milestone_achieved,
+              weightEntries: entries.map((e: any) => ({
+                id: e.id,
+                date: e.date,
+                weight: Number(e.weight),
+                notes: e.notes,
+                recordedBy: e.recorded_by,
+                movingAverage: Number(e.moving_average),
+                weeklyRate: Number(e.weekly_rate),
+                excludeFromCalculations: e.exclude_from_calculations,
+                isLowest: e.is_lowest,
+                isHighest: e.is_highest,
+                nutritionId: e.active_nutrition_id
+              })),
+              photoRequests: requests,
+              physiquePhotos: photos,
+              nutritionData: plans
+            };
+          });
+        }
+        
+        setCoach({ id: coachId, name: profile.full_name || 'Coach', clients: formattedClients });
+        
+        const { data: alertsData } = await supabase.from('alerts').select('*').eq('coach_id', coachId).order('date', { ascending: false });
+        if (alertsData) setAlerts(alertsData as Alert[]);
+
+      } else {
+        // Athlete Flow
+        const { data: settings } = await supabase.from('client_settings').select('*').eq('id', userId).single();
+        
+        const [
+          { data: allEntries },
+          { data: allPhotos },
+          { data: allRequests },
+          { data: allPlans }
+        ] = await Promise.all([
+          supabase.from('weight_entries').select('*').eq('client_id', userId).order('date', { ascending: false }),
+          supabase.from('physique_photos').select('*').eq('client_id', userId),
+          supabase.from('photo_requests').select('*').eq('client_id', userId),
+          supabase.from('nutrition_plans').select('*').eq('client_id', userId)
+        ]);
+
+        const myClientData = {
+          id: userId,
+          name: profile.full_name || 'Atleta',
+          email: profile.email,
+          avatar: profile.avatar_url,
+          unit: settings?.unit || 'kg',
+          targetWeeklyRate: settings?.target_weekly_rate || -0.5,
+          milestone: settings?.milestone,
+          milestoneAchieved: settings?.milestone_achieved,
+          weightEntries: (allEntries || []).map((e: any) => ({
+            id: e.id,
+            date: e.date,
+            weight: Number(e.weight),
+            notes: e.notes,
+            recordedBy: e.recorded_by,
+            movingAverage: Number(e.moving_average),
+            weeklyRate: Number(e.weekly_rate),
+            excludeFromCalculations: e.exclude_from_calculations,
+            isLowest: e.is_lowest,
+            isHighest: e.is_highest,
+            nutritionId: e.active_nutrition_id
+          })),
+          photoRequests: allRequests || [],
+          physiquePhotos: allPhotos || [],
+          nutritionData: allPlans || []
+        };
+        
+        setCoach({ id: settings?.coach_id || 'unassigned', name: 'Mi Coach', clients: [myClientData] });
+      }
+
       setLoading(false);
     }
 
@@ -152,50 +190,67 @@ export function useWeightTracker() {
     let effectiveCoachId = coachId;
 
     const setupSubscriptions = async () => {
-      if (currentUser.role === 'client') {
-        const { data: settings } = await supabase.from('client_settings').select('coach_id').eq('id', currentUser.id).single();
-        effectiveCoachId = settings?.coach_id;
+      let coachId = currentUser.role === 'coach' ? currentUser.id : null;
+      let clientId = currentUser.role === 'client' ? currentUser.id : null;
+
+      const channels = [];
+
+      if (coachId) {
+        // Listen for coach's alerts
+        const alertsChannel = supabase
+          .channel('public:alerts')
+          .on('postgres_changes', { 
+            event: '*', 
+            schema: 'public', 
+            table: 'alerts',
+            filter: `coach_id=eq.${coachId}`
+          }, (payload: { eventType: string; new: Alert }) => {
+            if (payload.eventType === 'INSERT') {
+              setAlerts(prev => [payload.new, ...prev]);
+              toast.info('Nueva alerta recibida', {
+                description: payload.new.message
+              });
+            } else if (payload.eventType === 'UPDATE') {
+              setAlerts(prev => prev.map(a => a.id === payload.new.id ? { ...a, ...payload.new } : a));
+            }
+          })
+          .subscribe();
+        channels.push(alertsChannel);
+
+        // Listen for all weight entries (coach will filter internally or refresh data)
+        const weightChannel = supabase
+          .channel('public:weight_entries')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'weight_entries'
+          }, (payload: { eventType: string; new: { client_id: string } }) => {
+            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+              refreshClientData(payload.new.client_id);
+            }
+          })
+          .subscribe();
+        channels.push(weightChannel);
+      } else if (clientId) {
+        // Athlete listens ONLY to their own weight entries
+        const weightChannel = supabase
+          .channel('public:weight_entries')
+          .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'weight_entries',
+            filter: `client_id=eq.${clientId}`
+          }, (payload: { eventType: string; new: { client_id: string } }) => {
+            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+              refreshClientData(clientId);
+            }
+          })
+          .subscribe();
+        channels.push(weightChannel);
       }
 
-      if (!effectiveCoachId) return;
-
-      // Listen for new alerts
-      const alertsChannel = supabase
-        .channel('public:alerts')
-        .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'alerts',
-          filter: `coach_id=eq.${effectiveCoachId}`
-        }, (payload: { eventType: string; new: Alert }) => {
-          if (payload.eventType === 'INSERT') {
-            setAlerts(prev => [payload.new, ...prev]);
-            toast.info('Nueva alerta recibida', {
-              description: payload.new.message
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            setAlerts(prev => prev.map(a => a.id === payload.new.id ? { ...a, ...payload.new } : a));
-          }
-        })
-        .subscribe();
-
-      // Listen for weight entries (refresh logic)
-      const weightChannel = supabase
-        .channel('public:weight_entries')
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'weight_entries'
-        }, (payload: { eventType: string; new: { client_id: string } }) => {
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            refreshClientData(payload.new.client_id);
-          }
-        })
-        .subscribe();
-
       return () => {
-        supabase.removeChannel(alertsChannel);
-        supabase.removeChannel(weightChannel);
+        channels.forEach(ch => supabase.removeChannel(ch));
       };
     };
 
@@ -470,24 +525,43 @@ export function useWeightTracker() {
     setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, isRead: true } : a));
   };
 
-  const initializeMockMode = async (accountIdOrUserId: string) => {
+  const initializeMockMode = async (accountIdOrUserId: string, isInfluencerOverride?: boolean, customFullName?: string, customEmail?: string) => {
     isMockMode.current = true;
 
     // Determine which data set to load
     const accountId = localStorage.getItem('kcaliper_account') || 'argo';
 
-    if (accountId === 'esteban') {
+    if (accountId === 'esteban' || isInfluencerOverride) {
       // Load Esteban's data
       const clientsWithRates = estebanCoach.clients.map(client => ({
         ...client,
         weightEntries: recalculateAllWeeklyRates(client.weightEntries)
       }));
 
-      setCoach({ ...estebanCoach, clients: clientsWithRates } as any);
+      // Override the core coach profile with the real user's details if provided by an influencer signup
+      const finalCoachProfile = {
+         ...estebanCoach,
+         id: customEmail ? accountIdOrUserId : estebanCoach.id,
+         name: customFullName || estebanCoach.name,
+         email: customEmail || estebanCoach.email,
+         clients: clientsWithRates
+      };
+
+      setCoach(finalCoachProfile as any);
       setAlerts(estebanAlerts);
 
-      // Find user (could be coach or one of his clients)
-      const user = estebanUsers.find(u => u.id === accountIdOrUserId) || estebanUsers[0];
+      // Find user or construct dynamic one
+      let user = estebanUsers.find(u => u.id === accountIdOrUserId);
+      if (!user && isInfluencerOverride) {
+        user = {
+          id: accountIdOrUserId,
+          name: customFullName || estebanCoach.name,
+          email: customEmail || estebanCoach.email,
+          role: 'coach'
+        } as User;
+      } else if (!user) {
+        user = estebanUsers[0];
+      }
       setCurrentUser(user as any);
     } else {
       // Default: load Carlos / Argo data

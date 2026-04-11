@@ -117,11 +117,53 @@ const sebastianEntries = generateRecentWeightData(
   'sr'
 );
 
+// ─── Client 7: Mariana López (cutting lento ~55 kg) ───
+const marianaEntries = generateRecentWeightData(
+  '2025-11-01', '2026-04-08',
+  57.2, 54.8,
+  'ml'
+);
+
+// ─── Client 8: Sofía Petrov (buen progreso ~61 kg) ───
+const sofiaEntries = generateRecentWeightData(
+  '2025-10-15', '2026-04-08',
+  64.0, 60.5,
+  'sp'
+);
+
+// ─── Client 9: Lucía Ramírez (mantenimiento ~47 kg) ───
+const luciaEntries = generateRecentWeightData(
+  '2025-11-10', '2026-04-08',
+  48.5, 47.2,
+  'lr'
+);
+
+// ─── Client 10: Ana García (plateau reciente ~58 kg) ───
+const anaEntries = generateRecentWeightData(
+  '2025-09-15', '2026-04-08',
+  62.0, 57.8,
+  'ag'
+);
+
+// ─── Client 11: Natalia Díaz (progreso rápido ~63 kg) ───
+const nataliaEntries = generateRecentWeightData(
+  '2025-11-05', '2026-04-08',
+  67.0, 62.4,
+  'nd'
+);
+
+// ─── Client 12: Fernanda Castillo (oscilando ~52 kg) ───
+const fernandaEntries = generateRecentWeightData(
+  '2025-10-20', '2026-04-08',
+  54.0, 52.1,
+  'fc'
+);
+
 export const estebanClients: Client[] = [
   {
     id: 'ea-client1',
     name: 'Valentina Torres',
-    email: 'valentina@kcaliper.ai',
+    email: 'valentina@kcaliper.com',
     unit: 'kg',
     country: 'Colombia',
     targetWeeklyRate: -0.4,
@@ -165,7 +207,7 @@ export const estebanClients: Client[] = [
   {
     id: 'ea-client2',
     name: 'Diego Morales',
-    email: 'diego@kcaliper.ai',
+    email: 'diego@kcaliper.com',
     unit: 'kg',
     country: 'Ecuador',
     targetWeeklyRate: -0.5,
@@ -202,7 +244,7 @@ export const estebanClients: Client[] = [
   {
     id: 'ea-client3',
     name: 'Camila Herrera',
-    email: 'camila@kcaliper.ai',
+    email: 'camila@kcaliper.com',
     unit: 'kg',
     country: 'México',
     targetWeeklyRate: -0.5,
@@ -239,7 +281,7 @@ export const estebanClients: Client[] = [
   {
     id: 'ea-client4',
     name: 'Andrés Pacheco',
-    email: 'andres@kcaliper.ai',
+    email: 'andres@kcaliper.com',
     unit: 'kg',
     country: 'Venezuela',
     targetWeeklyRate: -0.6,
@@ -277,7 +319,7 @@ export const estebanClients: Client[] = [
   {
     id: 'ea-client5',
     name: 'Isabella Mendoza',
-    email: 'isabella.m@kcaliper.ai',
+    email: 'isabella.m@kcaliper.com',
     unit: 'kg',
     country: 'Perú',
     targetWeeklyRate: -0.3,
@@ -303,7 +345,7 @@ export const estebanClients: Client[] = [
   {
     id: 'ea-client6',
     name: 'Sebastián Ríos',
-    email: 'sebastian@kcaliper.ai',
+    email: 'sebastian@kcaliper.com',
     unit: 'kg',
     country: 'Argentina',
     targetWeeklyRate: 0.3,
@@ -336,13 +378,244 @@ export const estebanClients: Client[] = [
         isRead: true,
       }
     ]
+  },
+  // ─── NEW FEMALE CLIENTS (7-12) ───
+  {
+    id: 'ea-client7',
+    name: 'Mariana López',
+    email: 'mariana@kcaliper.com',
+    unit: 'kg',
+    country: 'Colombia',
+    targetWeeklyRate: -0.25,
+    weightEntries: marianaEntries,
+    createdAt: '2025-11-01',
+    notifyLowest: true,
+    notifyHighest: false,
+    notifyRateDeviation: true,
+    milestone: 53.0,
+    milestoneAchieved: false,
+    timezone: 'America/Bogota',
+    reminderEnabled: true,
+    reminderTime: '06:45',
+    showMovingAverage: true,
+    physiquePhotos: [],
+    photoRequests: [],
+    notifications: [
+      {
+        id: 'cn13',
+        type: 'milestone_set',
+        message: 'Coach Esteban configuró tu milestone: 53.0 kg 🎯',
+        date: '2025-11-05',
+        isRead: true,
+      },
+      {
+        id: 'cn14',
+        type: 'coach_message',
+        message: 'Mariana, tu adherencia esta semana fue impecable. Mantén la proteína alta para proteger músculo.',
+        date: '2026-04-06',
+        isRead: false,
+      },
+      {
+        id: 'cn15',
+        type: 'nutrition_updated',
+        message: 'Coach Esteban actualizó tu plan: 1650 kcal / 130g proteína',
+        date: '2026-03-10',
+        isRead: true,
+      }
+    ]
+  },
+  {
+    id: 'ea-client8',
+    name: 'Sofía Petrov',
+    email: 'sofia.petrov@kcaliper.com',
+    unit: 'kg',
+    country: 'Argentina',
+    targetWeeklyRate: -0.35,
+    weightEntries: sofiaEntries,
+    createdAt: '2025-10-15',
+    notifyLowest: true,
+    notifyHighest: false,
+    notifyRateDeviation: true,
+    milestone: 58.0,
+    milestoneAchieved: false,
+    timezone: 'America/Argentina/Buenos_Aires',
+    reminderEnabled: true,
+    reminderTime: '07:15',
+    showMovingAverage: true,
+    physiquePhotos: [],
+    photoRequests: [],
+    notifications: [
+      {
+        id: 'cn16',
+        type: 'coach_message',
+        message: 'Sofía, llevas 6 meses increíbles. Tu consistencia es ejemplo para todo el equipo.',
+        date: '2026-04-07',
+        isRead: false,
+      },
+      {
+        id: 'cn17',
+        type: 'target_rate_changed',
+        message: 'Coach Esteban ajustó tu meta semanal a -0.35 kg/sem (fase final)',
+        date: '2026-03-20',
+        isRead: true,
+      }
+    ]
+  },
+  {
+    id: 'ea-client9',
+    name: 'Lucía Ramírez',
+    email: 'lucia.ramirez@kcaliper.com',
+    unit: 'kg',
+    country: 'México',
+    targetWeeklyRate: -0.15,
+    weightEntries: luciaEntries,
+    createdAt: '2025-11-10',
+    notifyLowest: true,
+    notifyHighest: false,
+    notifyRateDeviation: false,
+    milestone: 46.0,
+    milestoneAchieved: false,
+    timezone: 'America/Mexico_City',
+    reminderEnabled: true,
+    reminderTime: '06:30',
+    showMovingAverage: true,
+    physiquePhotos: [],
+    photoRequests: [],
+    notifications: [
+      {
+        id: 'cn18',
+        type: 'milestone_set',
+        message: 'Coach Esteban configuró tu milestone: 46.0 kg 🎯',
+        date: '2025-12-01',
+        isRead: true,
+      },
+      {
+        id: 'cn19',
+        type: 'coach_message',
+        message: 'Lucía, estás en mantenimiento perfecto. Solo ajustamos los carbos post-entreno.',
+        date: '2026-04-04',
+        isRead: true,
+      }
+    ]
+  },
+  {
+    id: 'ea-client10',
+    name: 'Ana García',
+    email: 'ana.garcia@kcaliper.com',
+    unit: 'kg',
+    country: 'España',
+    targetWeeklyRate: -0.4,
+    weightEntries: anaEntries,
+    createdAt: '2025-09-15',
+    notifyLowest: true,
+    notifyHighest: false,
+    notifyRateDeviation: true,
+    notifyWeightModified: true,
+    milestone: 55.0,
+    milestoneAchieved: false,
+    timezone: 'Europe/Madrid',
+    reminderEnabled: true,
+    reminderTime: '07:00',
+    showMovingAverage: true,
+    physiquePhotos: [],
+    photoRequests: [],
+    notifications: [
+      {
+        id: 'cn20',
+        type: 'coach_message',
+        message: 'Ana, llevas 7 meses de dedicación. El plateau es temporal, no toques calorías aún.',
+        date: '2026-04-08',
+        isRead: false,
+      },
+      {
+        id: 'cn21',
+        type: 'nutrition_updated',
+        message: 'Coach Esteban actualizó tu plan: 1800 kcal / 140g proteína / refeed sábados',
+        date: '2026-03-25',
+        isRead: true,
+      }
+    ]
+  },
+  {
+    id: 'ea-client11',
+    name: 'Natalia Díaz',
+    email: 'natalia.diaz@kcaliper.com',
+    unit: 'kg',
+    country: 'Chile',
+    targetWeeklyRate: -0.45,
+    weightEntries: nataliaEntries,
+    createdAt: '2025-11-05',
+    notifyLowest: true,
+    notifyHighest: false,
+    notifyRateDeviation: true,
+    milestone: 60.0,
+    milestoneAchieved: false,
+    timezone: 'America/Santiago',
+    reminderEnabled: true,
+    reminderTime: '06:00',
+    showMovingAverage: true,
+    physiquePhotos: [],
+    photoRequests: [],
+    notifications: [
+      {
+        id: 'cn22',
+        type: 'coach_message',
+        message: 'Natalia, tu progreso es de los más rápidos. Vamos a bajar el ritmo un poco para proteger masa muscular.',
+        date: '2026-04-05',
+        isRead: false,
+      },
+      {
+        id: 'cn23',
+        type: 'target_rate_changed',
+        message: 'Coach Esteban ajustó tu meta semanal a -0.45 kg/sem (desaceleración controlada)',
+        date: '2026-03-15',
+        isRead: true,
+      }
+    ]
+  },
+  {
+    id: 'ea-client12',
+    name: 'Fernanda Castillo',
+    email: 'fernanda.c@kcaliper.com',
+    unit: 'kg',
+    country: 'Perú',
+    targetWeeklyRate: -0.2,
+    weightEntries: fernandaEntries,
+    createdAt: '2025-10-20',
+    notifyLowest: true,
+    notifyHighest: false,
+    notifyRateDeviation: true,
+    milestone: 50.0,
+    milestoneAchieved: false,
+    timezone: 'America/Lima',
+    reminderEnabled: true,
+    reminderTime: '07:30',
+    showMovingAverage: true,
+    physiquePhotos: [],
+    photoRequests: [],
+    notifications: [
+      {
+        id: 'cn24',
+        type: 'milestone_set',
+        message: 'Coach Esteban configuró tu milestone: 50.0 kg 🎯',
+        date: '2025-11-01',
+        isRead: true,
+      },
+      {
+        id: 'cn25',
+        type: 'coach_message',
+        message: 'Fernanda, las oscilaciones son normales en tu rango. Confía en la tendencia DEMA.',
+        date: '2026-04-07',
+        isRead: false,
+      }
+    ]
   }
 ];
 
 export const estebanCoach: Coach = {
   id: 'coach-esteban',
   name: 'Esteban Alban',
-  email: 'esteban@kcaliper.ai',
+  email: 'esteban@kcaliper.com',
   clients: estebanClients
 };
 
@@ -426,6 +699,55 @@ export const estebanAlerts: Alert[] = [
     message: 'Camila Herrera superó el milestone de 63.5 kg. ¡A re-configurar! 🎯',
     date: '2026-04-05',
     isRead: true
+  },
+  // ─── NEW ALERTS FOR CLIENTS 7-12 ───
+  {
+    id: 'ea-alert11',
+    clientId: 'ea-client7',
+    type: 'lowest',
+    message: 'Mariana López alcanzó un nuevo peso mínimo: 54.8 kg',
+    date: '2026-04-08',
+    isRead: false
+  },
+  {
+    id: 'ea-alert12',
+    clientId: 'ea-client8',
+    type: 'lowest',
+    message: 'Sofía Petrov alcanzó un nuevo peso mínimo: 60.5 kg 🎉',
+    date: '2026-04-07',
+    isRead: false
+  },
+  {
+    id: 'ea-alert13',
+    clientId: 'ea-client10',
+    type: 'rate_deviation',
+    message: 'Ana García — ritmo semanal (-0.1 kg) por debajo de meta (-0.4 kg). Posible plateau.',
+    date: '2026-04-08',
+    isRead: false
+  },
+  {
+    id: 'ea-alert14',
+    clientId: 'ea-client11',
+    type: 'rate_deviation',
+    message: 'Natalia Díaz — ritmo semanal (-0.7 kg) excede meta (-0.45 kg). Revisar déficit.',
+    date: '2026-04-06',
+    isRead: false
+  },
+  {
+    id: 'ea-alert15',
+    clientId: 'ea-client9',
+    type: 'target_streak',
+    message: 'Lucía Ramírez ha mantenido su ritmo objetivo por 21 días consecutivos 🏆',
+    date: '2026-04-07',
+    isRead: false
+  },
+  {
+    id: 'ea-alert16',
+    clientId: 'ea-client12',
+    type: 'lowest',
+    message: 'Fernanda Castillo alcanzó un nuevo peso mínimo: 52.1 kg',
+    date: '2026-04-08',
+    isRead: false
   }
 ];
 
@@ -433,48 +755,90 @@ export const estebanUsers: User[] = [
   {
     id: 'coach-esteban',
     name: 'Esteban Alban',
-    email: 'esteban@kcaliper.ai',
+    email: 'esteban@kcaliper.com',
     role: 'coach'
   },
   {
     id: 'ea-client1',
     name: 'Valentina Torres',
-    email: 'valentina@kcaliper.ai',
+    email: 'valentina@kcaliper.com',
     role: 'client',
     coachId: 'coach-esteban'
   },
   {
     id: 'ea-client2',
     name: 'Diego Morales',
-    email: 'diego@kcaliper.ai',
+    email: 'diego@kcaliper.com',
     role: 'client',
     coachId: 'coach-esteban'
   },
   {
     id: 'ea-client3',
     name: 'Camila Herrera',
-    email: 'camila@kcaliper.ai',
+    email: 'camila@kcaliper.com',
     role: 'client',
     coachId: 'coach-esteban'
   },
   {
     id: 'ea-client4',
     name: 'Andrés Pacheco',
-    email: 'andres@kcaliper.ai',
+    email: 'andres@kcaliper.com',
     role: 'client',
     coachId: 'coach-esteban'
   },
   {
     id: 'ea-client5',
     name: 'Isabella Mendoza',
-    email: 'isabella.m@kcaliper.ai',
+    email: 'isabella.m@kcaliper.com',
     role: 'client',
     coachId: 'coach-esteban'
   },
   {
     id: 'ea-client6',
     name: 'Sebastián Ríos',
-    email: 'sebastian@kcaliper.ai',
+    email: 'sebastian@kcaliper.com',
+    role: 'client',
+    coachId: 'coach-esteban'
+  },
+  {
+    id: 'ea-client7',
+    name: 'Mariana López',
+    email: 'mariana@kcaliper.com',
+    role: 'client',
+    coachId: 'coach-esteban'
+  },
+  {
+    id: 'ea-client8',
+    name: 'Sofía Petrov',
+    email: 'sofia.petrov@kcaliper.com',
+    role: 'client',
+    coachId: 'coach-esteban'
+  },
+  {
+    id: 'ea-client9',
+    name: 'Lucía Ramírez',
+    email: 'lucia.ramirez@kcaliper.com',
+    role: 'client',
+    coachId: 'coach-esteban'
+  },
+  {
+    id: 'ea-client10',
+    name: 'Ana García',
+    email: 'ana.garcia@kcaliper.com',
+    role: 'client',
+    coachId: 'coach-esteban'
+  },
+  {
+    id: 'ea-client11',
+    name: 'Natalia Díaz',
+    email: 'natalia.diaz@kcaliper.com',
+    role: 'client',
+    coachId: 'coach-esteban'
+  },
+  {
+    id: 'ea-client12',
+    name: 'Fernanda Castillo',
+    email: 'fernanda.c@kcaliper.com',
     role: 'client',
     coachId: 'coach-esteban'
   }

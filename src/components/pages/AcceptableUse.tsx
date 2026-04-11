@@ -15,11 +15,11 @@ export function AcceptableUse({ onBack }: { onBack: () => void }) {
         <div className="space-y-8 text-white/70 text-sm leading-relaxed">
           <section>
             <h2 className="text-lg font-bold text-white mb-3">1. Propósito</h2>
-            <p>Esta política define las reglas de uso aceptable de kCaliper.ai para garantizar una experiencia segura y positiva para todos los usuarios.</p>
+            <p>Esta política define las reglas de uso aceptable de kcaliper.com para garantizar una experiencia segura y positiva para todos los usuarios.</p>
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-3">2. Usos Prohibidos</h2>
-            <p className="mb-2">Está prohibido utilizar kCaliper.ai para:</p>
+            <p className="mb-2">Está prohibido utilizar kcaliper.com para:</p>
             <ul className="list-disc list-inside space-y-1.5 text-white/60">
               <li>Promover trastornos alimenticios o prácticas de pérdida de peso peligrosas</li>
               <li>Compartir contenido inapropiado, ofensivo o ilegal a través de fotos o mensajes</li>
@@ -50,7 +50,7 @@ export function AcceptableUse({ onBack }: { onBack: () => void }) {
               <li>Los coaches son responsables del contenido que comparten con sus atletas</li>
               <li>Deben mantener la confidencialidad de los datos de sus clientes</li>
               <li>No deben utilizar los datos para fines distintos al coaching acordado</li>
-              <li>Deben informar a sus clientes sobre el uso de kCaliper.ai para seguimiento</li>
+              <li>Deben informar a sus clientes sobre el uso de kcaliper.com para seguimiento</li>
             </ul>
           </section>
           <section>
@@ -65,7 +65,7 @@ export function AcceptableUse({ onBack }: { onBack: () => void }) {
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-3">7. Reportar Violaciones</h2>
-            <p>Si detectas una violación de esta política, contáctanos en: <a href="mailto:abuso@kcaliper.ai" className="text-[#6C5CE7] hover:underline">abuso@kcaliper.ai</a></p>
+            <p>Si detectas una violación de esta política, contáctanos en: <a href="mailto:abuso@kcaliper.com" className="text-[#6C5CE7] hover:underline">abuso@kcaliper.com</a></p>
           </section>
         </div>
       </div>

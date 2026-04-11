@@ -15,7 +15,7 @@ export function PrivacyPolicy({ onBack }: { onBack: () => void }) {
         <div className="space-y-8 text-white/70 text-sm leading-relaxed">
           <section>
             <h2 className="text-lg font-bold text-white mb-3">1. Información que Recopilamos</h2>
-            <p>En kCaliper.ai recopilamos la siguiente información para proveer nuestro servicio:</p>
+            <p>En kcaliper.com recopilamos la siguiente información para proveer nuestro servicio:</p>
             <ul className="list-disc list-inside mt-3 space-y-1.5 text-white/60">
               <li><strong className="text-white/80">Datos de cuenta:</strong> nombre, correo electrónico, país</li>
               <li><strong className="text-white/80">Datos biométricos:</strong> peso corporal, fotos de progreso (si las proporcionas)</li>
@@ -69,7 +69,7 @@ export function PrivacyPolicy({ onBack }: { onBack: () => void }) {
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-3">8. Contacto</h2>
-            <p>Para cualquier consulta sobre privacidad, contáctanos en: <a href="mailto:privacidad@kcaliper.ai" className="text-[#6C5CE7] hover:underline">privacidad@kcaliper.ai</a></p>
+            <p>Para cualquier consulta sobre privacidad, contáctanos en: <a href="mailto:privacidad@kcaliper.com" className="text-[#6C5CE7] hover:underline">privacidad@kcaliper.com</a></p>
           </section>
         </div>
       </div>

@@ -4,8 +4,9 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Bell, BellOff, TrendingDown, TrendingUp, AlertTriangle, Edit3, Award, Target, X, Camera } from 'lucide-react';
+import { Bell, BellOff, TrendingDown, TrendingUp, AlertTriangle, Edit3, Award, Target, X, Camera, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 interface AlertsPanelProps {
   alerts: Alert[];
@@ -245,6 +246,27 @@ export function AlertsPanel({ alerts, unreadAlerts, onMarkAsRead, onViewClient }
         <CardTitle className="flex items-center gap-2 dark:text-white">
           <Bell className="w-5 h-5" />
           Alerts
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" className="inline-flex ml-1">
+                  <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs p-3">
+                <p className="font-semibold text-xs mb-2">Guía de Colores</p>
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-green-500" /><span>Nuevo peso mínimo</span></div>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-red-500" /><span>Nuevo peso máximo</span></div>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-orange-500" /><span>Desviación de tasa / Sin registro</span></div>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-blue-500" /><span>Peso modificado</span></div>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-yellow-500" /><span>Milestone alcanzado</span></div>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-purple-500" /><span>Racha de objetivos</span></div>
+                  <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm bg-cyan-500" /><span>Foto subida</span></div>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">

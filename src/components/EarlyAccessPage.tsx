@@ -1,6 +1,10 @@
 import { ArrowRight, CheckCircle2, Play, Clock, Shield, Sparkles, Instagram, Activity } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
+import { VideoPlayer } from "./ui/video-player";
+import { TextEffect } from "./ui/text-effect";
+import { AnimatedGroup } from "./ui/animated-group";
+import { FAQSection } from "./ui/faq-section";
 
 interface EarlyAccessPageProps {
   onNavigate?: (page: string) => void;
@@ -35,16 +39,38 @@ export function EarlyAccessPage({ onNavigate }: EarlyAccessPageProps) {
   const launchDate = useRef(new Date(Date.now() + 16 * 24 * 60 * 60 * 1000));
   const countdown = useCountdown(launchDate.current);
 
+  const faqsLeft = [
+    {
+      question: "¿Qué recibo al asegurar mi precio de Fundador?",
+      answer: "Obtienes un 60% de descuento vitalicio sobre el precio de lanzamiento, acceso anticipado a la plataforma y línea directa con nuestro equipo de desarrollo."
+    },
+    {
+      question: "¿Cómo funciona la IA de Kcaliper?",
+      answer: "Nuestra IA analiza tus pesajes diarios aplicando algoritmos de suavizado como DEMA para aislar el ruido (retención de agua, etc.) y mostrarte tu verdadera tendencia."
+    },
+  ];
+
+  const faqsRight = [
+    {
+      question: "Si soy Coach, ¿qué pasa con mis clientes?",
+      answer: "Tus clientes deben descargar Kcaliper y crear una cuenta de atleta. Desde tu Dashboard podrás agregarlos y monitorear todos sus datos automáticamente."
+    },
+    {
+      question: "¿Puedo cancelar mi cuenta en cualquier momento?",
+      answer: "Totalmente. El procesamiento de pagos está manejado por Stripe; no hay ataduras ni letras pequeñas. Si cancelas, mantienes acceso hasta el final del ciclo pagado."
+    },
+  ];
+
   const handlePayment = () => {
     let url = "";
     if (pricingTab === 'athlete') {
       url = athleteBilling === 'monthly' 
-        ? "https://buy.stripe.com/00w00jeZB0Pe7ht2IQ3ZK0a" 
-        : "https://buy.stripe.com/5kQeVd4kXeG48lx0AI3ZK0b";
+        ? "https://buy.stripe.com/test_5kQdR95rtgQLeDd7qO04805" // Atleta Mensual Test
+        : "https://buy.stripe.com/test_5kQ3cv0792ZVamXbH404806"; // Atleta Anual Test
     } else {
       url = coachBilling === 'monthly'
-        ? "https://buy.stripe.com/7sYeVdaJl9lKeJVcjq3ZK0c"
-        : "https://buy.stripe.com/3cI5kDcRtapOeJV0AI3ZK0d";
+        ? "https://buy.stripe.com/test_aFa8wP8DF0RN52D5iG04803" // Coach Mensual Test
+        : "https://buy.stripe.com/test_7sY4gz7zB2ZVfHhaD004804"; // Coach Anual Test
     }
     window.location.href = url;
   };
@@ -83,30 +109,29 @@ export function EarlyAccessPage({ onNavigate }: EarlyAccessPageProps) {
       </nav>
 
       {/* ===== HERO: WELCOME + VIDEO ===== */}
-      <section className="relative pt-28 pb-12 px-5">
-        <div className="container mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-5 py-2 mb-6 animate-slide-up">
-            <CheckCircle2 className="w-4 h-4 text-green-400" />
-            <span className="text-green-400 text-sm font-bold">¡Estás dentro! Tu lugar está asegurado.</span>
-          </div>
-
-          <h1 className="text-4xl sm:text-5xl font-extrabold leading-[1.1] mb-6 text-white animate-slide-up delay-100">
-            Bienvenido a la <span className="text-fp-gradient">era de la precisión.</span>
-          </h1>
-          <p className="text-base sm:text-lg text-white/60 mb-10 animate-slide-up delay-200 max-w-2xl mx-auto">
-            Estamos en fase de lanzamiento. Mira este video donde te explico qué es Kcaliper AI y por qué esta es la <strong className="text-white">única oportunidad</strong> de obtener un 60% de descuento permanente.
-          </p>
-
-          {/* Video Placeholder */}
-          <div className="relative aspect-video max-w-3xl mx-auto rounded-2xl overflow-hidden bg-[#12122A] border border-white/10 mb-6 animate-slide-up delay-300 group cursor-pointer">
-            <div className="absolute inset-0 bg-fp-gradient opacity-10 group-hover:opacity-20 transition-opacity" />
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform border border-white/20 mb-4">
-                <Play className="w-8 h-8 text-white ml-1" fill="white" />
+      <section className="relative pt-28 pb-12 px-5 z-10">
+        <div className="container mx-auto max-w-5xl text-center">
+            <AnimatedGroup preset="slide" className="flex flex-col items-center justify-center">
+              <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-5 py-2 mb-6">
+                <CheckCircle2 className="w-4 h-4 text-green-400" />
+                <span className="text-green-400 text-sm font-bold">¡Estás dentro! Tu lugar está asegurado.</span>
               </div>
-              <p className="text-white/60 text-sm font-medium">Video de presentación — Próximamente</p>
+
+              <div className="mb-6">
+                <TextEffect per="word" as="h1" className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-[1.1] text-white">
+                  Bienvenido a la era de la precisión.
+                </TextEffect>
+              </div>
+
+              <p className="text-base sm:text-lg text-white/60 mb-10 max-w-2xl mx-auto">
+                Estamos en fase de lanzamiento. Mira este video donde te explico qué es Kcaliper AI y por qué esta es la <strong className="text-white">única oportunidad</strong> de obtener un 60% de descuento permanente.
+              </p>
+            </AnimatedGroup>
+
+            {/* Video Player */}
+            <div className="mt-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+               <VideoPlayer src="https://videos.pexels.com/video-files/30333849/13003128_2560_1440_25fps.mp4" />
             </div>
-          </div>
         </div>
       </section>
 
@@ -334,20 +359,33 @@ export function EarlyAccessPage({ onNavigate }: EarlyAccessPageProps) {
         </div>
       </section>
 
+      {/* ===== FAQ ===== */}
+      <div className="bg-black text-white relative z-10 border-t border-white/5">
+        <FAQSection
+          title="Preguntas Frecuentes"
+          subtitle="Soporte y Dudas"
+          description="Resolvemos las consultas más comunes sobre el precio fundador y la plataforma."
+          buttonLabel="Escríbenos si tienes más dudas →"
+          faqsLeft={faqsLeft}
+          faqsRight={faqsRight}
+          className="py-20"
+        />
+      </div>
+
       {/* ===== FOOTER ===== */}
       <footer className="py-10 px-5 border-t border-white/5">
         <div className="container mx-auto max-w-4xl">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
               <div className="w-7 h-7 bg-fp-gradient rounded-lg flex items-center justify-center"><Activity className="text-white w-3.5 h-3.5" /></div>
-              <span className="text-sm font-black text-white">kCaliper.ai</span>
+              <span className="text-sm font-black text-white">kcaliper.com</span>
               <span className="text-xs text-white/30">© 2026</span>
             </div>
             <div className="flex items-center gap-6">
               {[['privacidad','Privacidad'],['terminos','Términos']].map(([to,label]) => (
                 <button key={to} onClick={() => navTo(to)} className="text-xs text-white/40 hover:text-white/80 transition-colors">{label}</button>
               ))}
-              <a href="https://instagram.com/kcaliper.ai" target="_blank" rel="noopener" className="flex items-center gap-1 text-xs text-white/40 hover:text-white/80 transition-colors"><Instagram className="w-3.5 h-3.5" />@kcaliper.ai</a>
+              <a href="https://instagram.com/kcaliper.com" target="_blank" rel="noopener" className="flex items-center gap-1 text-xs text-white/40 hover:text-white/80 transition-colors"><Instagram className="w-3.5 h-3.5" />@kcaliper.com</a>
             </div>
           </div>
         </div>

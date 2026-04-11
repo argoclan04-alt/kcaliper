@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Settings, HelpCircle, MessageSquare, Bell, Image as ImageIcon } from 'lucide-react';
+import { Plus, Settings, HelpCircle, MessageSquare, Bell, Image as ImageIcon, CheckCircle2, CircleDashed, Zap } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card, CardContent } from './ui/card';
@@ -62,6 +62,10 @@ export function Logbook({
   const [showPhotosMode, setShowPhotosMode] = useState(false);
   const [selectedPhotoEntry, setSelectedPhotoEntry] = useState<WeightEntry | null>(null);
   const [showScanner, setShowScanner] = useState(false);
+
+  const hasPhoto = client?.physiquePhotos && client.physiquePhotos.length > 0;
+  const entriesCount = entries.length;
+  const hasEnoughDataForDEMA = entriesCount >= 3;
 
   // Sort entries by date (most recent first)
   const sortedEntries = [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -171,6 +175,36 @@ export function Logbook({
 
       {/* Content */}
       <div className="px-4 py-6">
+
+      {/* Gamified Actionable Checklist */}
+      {(entriesCount < 7 || !hasPhoto) && (
+        <Card className="bg-[#111111] border-white/10 relative overflow-hidden mb-8">
+           <div className="absolute top-0 right-0 p-8 opacity-10">
+               <Zap className="w-24 h-24 text-[var(--fp-cyan)]" />
+           </div>
+           <CardContent className="p-6 relative z-10 flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-1">
+                 <h3 className="text-xl font-bold text-white mb-1">Misiones de Arranque</h3>
+                 <p className="text-gray-400 text-sm mb-4">Completa estos pasos para que CaliBot conozca tu biología al 100%.</p>
+                 
+                 <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                       <CheckCircle2 className="w-5 h-5 text-green-500" />
+                       <span className="text-gray-300 font-medium line-through">Onboarding Completado</span>
+                    </div>
+                    <div className="flex items-center gap-3 group">
+                       {hasPhoto ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <CircleDashed className="w-5 h-5 text-[var(--fp-cyan)] group-hover:scale-110 transition-transform" />}
+                       <span className={`font-medium ${hasPhoto ? 'text-gray-300 line-through' : 'text-white'}`}>Subir primera Foto de Progreso</span>
+                    </div>
+                    <div className="flex items-center gap-3 group">
+                       {hasEnoughDataForDEMA ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <CircleDashed className="w-5 h-5 text-[var(--fp-violet)] animate-pulse" />}
+                       <span className={`font-medium ${hasEnoughDataForDEMA ? 'text-gray-300 line-through' : 'text-white'}`}>Ingresar 3 registros de peso ({entriesCount}/3)</span>
+                    </div>
+                 </div>
+              </div>
+           </CardContent>
+        </Card>
+      )}
         {entries.length === 0 ? (
           /* Empty State */
           <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">

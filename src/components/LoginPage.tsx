@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Loader2, Lock, Mail } from 'lucide-react';
-import { Button } from './ui/button';
-import { toast } from 'sonner';
+import React, { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
+import { CanvasRevealEffect, MiniNavbar } from "./ui/sign-in-flow-1";
+import { cn } from "./ui/utils";
 
 interface LoginPageProps {
   onNavigate: (page: string) => void;
@@ -9,12 +10,12 @@ interface LoginPageProps {
 
 // Credential registry — each entry maps to a different mock data profile
 const ACCOUNTS: Record<string, { password: string; accountId: string; displayName: string }> = {
-  'argo@kcaliper.ai': {
+  'argo@kcaliper.com': {
     password: 'kcaliperadmin',
     accountId: 'argo',
     displayName: 'Admin (Argo)'
   },
-  'esteban@kcaliper.ai': {
+  'esteban@kcaliper.com': {
     password: 'esteban2026',
     accountId: 'esteban',
     displayName: 'Coach Esteban Alban'
@@ -22,103 +23,194 @@ const ACCOUNTS: Record<string, { password: string; accountId: string; displayNam
 };
 
 export function LoginPage({ onNavigate }: LoginPageProps) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [step, setStep] = useState<"email" | "password" | "success">("email");
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  
+  const [initialCanvasVisible, setInitialCanvasVisible] = useState(true);
+  const [reverseCanvasVisible, setReverseCanvasVisible] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleEmailSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const account = ACCOUNTS[email.toLowerCase().trim()];
+    if (account) {
+      setStep("password");
+    } else {
+      toast.error("Este email no tiene acceso autorizado.");
+    }
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Humanistic delay for "authenticating"
-    await new Promise(resolve => setTimeout(resolve, 1200));
-
     const account = ACCOUNTS[email.toLowerCase().trim()];
-
     if (account && password === account.password) {
-      // Store auth token and account identifier
+      // Trigger canvas transition
+      setReverseCanvasVisible(true);
+      setTimeout(() => setInitialCanvasVisible(false), 50);
+
+      // Authenticate
       localStorage.setItem('kcaliper_auth', 'true');
       localStorage.setItem('kcaliper_account', account.accountId);
       
-      toast.success(`Bienvenido, ${account.displayName}. Conectando...`);
+      toast.success(`Bienvenido, ${account.displayName}.`);
       
-      // We use window.location.href instead of onNavigate to force a full page reload.
-      // This ensures the useWeightTracker hook re-initializes and reads the new accountId from storage.
+      setStep("success");
+      
       setTimeout(() => {
         window.location.href = '/dashboard';
-      }, 800);
+      }, 2000);
     } else {
-      toast.error('Credenciales incorrectas o cuenta no autorizada.');
+      toast.error('Contraseña incorrecta.');
       setLoading(false);
     }
   };
 
-  const goHome = () => {
-    window.location.href = '/';
+  const handleBackClick = () => {
+    setStep("email");
+    setPassword("");
+    setReverseCanvasVisible(false);
+    setInitialCanvasVisible(true);
   };
 
   return (
-    <div className="min-h-screen fp-dark-bg flex items-center justify-center p-5 relative overflow-hidden" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
-      {/* Particles BG */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[20%] left-[20%] w-[30%] h-[30%] rounded-full blur-[160px] bg-[#00D2FF]/10 animate-pulse-slow" />
-        <div className="absolute bottom-[20%] right-[20%] w-[30%] h-[30%] rounded-full blur-[160px] bg-[#6C5CE7]/10 animate-pulse-slow delay-1000" />
+    <div className="flex w-full flex-col min-h-screen bg-black relative text-white selection:bg-white selection:text-black">
+      {/* Background Layer */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        {initialCanvasVisible && (
+          <div className="absolute inset-0">
+            <CanvasRevealEffect
+              animationSpeed={3}
+              containerClassName="bg-black"
+              colors={[[255, 255, 255]]}
+              dotSize={6}
+              reverse={false}
+            />
+          </div>
+        )}
+        
+        {reverseCanvasVisible && (
+          <div className="absolute inset-0">
+            <CanvasRevealEffect
+              animationSpeed={4}
+              containerClassName="bg-black"
+              colors={[[255, 255, 255]]}
+              dotSize={6}
+              reverse={true}
+            />
+          </div>
+        )}
+        
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,0,0,0.8)_0%,_transparent_100%)]" />
+        <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-black to-transparent" />
       </div>
 
-      <button onClick={goHome} className="absolute top-8 left-8 text-white/50 hover:text-white transition-colors flex items-center gap-2">
-        <ArrowLeft className="w-5 h-5" /> Volver
-      </button>
+      {/* Navigation */}
+      <MiniNavbar />
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-fp-gradient rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-lg shadow-[#6C5CE7]/20">
-            <Lock className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">Kcaliper<span className="text-fp-gradient">.ai</span></h1>
-          <p className="text-white/50 mt-2 text-sm">Acceso restringido a miembros de la plataforma.</p>
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6">
+        <div className="w-full max-w-sm mt-32">
+          <AnimatePresence mode="wait">
+            {step === "email" ? (
+              <motion.div
+                key="email-step"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+                className="space-y-8 text-center"
+              >
+                <div className="space-y-2">
+                  <h1 className="text-4xl font-bold tracking-tight">Acceso Privado</h1>
+                  <p className="text-white/50 font-light">Escribe tu email de kCaliper</p>
+                </div>
+
+                <form onSubmit={handleEmailSubmit} className="space-y-4">
+                  <div className="relative group">
+                    <input
+                      type="email"
+                      placeholder="email@kcaliper.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-full py-4 px-6 text-center focus:outline-none focus:border-white/30 transition-all text-lg"
+                      required
+                    />
+                    <button
+                      type="submit"
+                      className="absolute right-2 top-2 bg-white text-black size-12 rounded-full flex items-center justify-center font-bold hover:scale-105 active:scale-95 transition-all"
+                    >
+                      →
+                    </button>
+                  </div>
+                </form>
+
+                <p className="text-[10px] text-white/20 uppercase tracking-[0.2em]">
+                  Solo personal autorizado · kCaliper AI v2.0
+                </p>
+              </motion.div>
+            ) : step === "password" ? (
+              <motion.div
+                key="password-step"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-8 text-center"
+              >
+                <div className="space-y-2">
+                  <h1 className="text-4xl font-bold tracking-tight">Identificación</h1>
+                  <p className="text-white/50 font-light">Ingresa tu clave de acceso</p>
+                </div>
+
+                <form onSubmit={handlePasswordSubmit} className="space-y-6">
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-full py-4 px-6 text-center focus:outline-none focus:border-white/30 transition-all text-2xl tracking-[0.5em]"
+                    autoFocus
+                    required
+                  />
+                  
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={handleBackClick}
+                      className="flex-1 bg-white/5 border border-white/10 py-3 rounded-full hover:bg-white/10 font-medium transition-colors"
+                    >
+                      Volver
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex-[2] bg-white text-black py-3 rounded-full font-bold hover:bg-white/90 transition-all disabled:opacity-50"
+                    >
+                      {loading ? "Verificando..." : "Entrar →"}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="success-step"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center space-y-6"
+              >
+                <div className="size-24 rounded-full bg-white flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(255,255,255,0.3)]">
+                  <span className="text-black text-4xl">✓</span>
+                </div>
+                <div className="space-y-2">
+                  <h1 className="text-4xl font-bold tracking-tight">Acceso Concedido</h1>
+                  <p className="text-white/50 font-light">Redirigiendo al Dashboard...</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-
-        <form onSubmit={handleLogin} className="fp-dark-card rounded-3xl p-8 border-white/10 shadow-2xl">
-          <div className="space-y-5">
-            <div>
-              <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-2">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]/50 transition-all"
-                  placeholder="coach@kcaliper.ai"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-white/70 uppercase tracking-wider mb-2">Contraseña</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#00D2FF]/50 transition-all"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-            </div>
-
-            <Button
-              disabled={loading}
-              type="submit"
-              className="w-full mt-4 h-12 bg-fp-gradient tracking-wide text-white rounded-xl hover:opacity-90 transition-all font-bold text-[15px] shadow-lg shadow-[#6C5CE7]/30"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Iniciar Sesión'}
-            </Button>
-          </div>
-        </form>
       </div>
     </div>
   );

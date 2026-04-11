@@ -392,3 +392,38 @@ CREATE INDEX idx_progress_user_lesson ON user_lesson_progress(user_id, lesson_id
 -- ARGO utilizes R2 for all multimedia assets. 
 -- The database stores 'key' or 'public_url' as TEXT.
 -- Presigned URLs should be generated via Workers.
+
+-- ==========================================
+-- 26. INFLUENCERS TABLE
+-- ==========================================
+
+CREATE TABLE influencers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  ig_handle TEXT NOT NULL,
+  tiktok_handle TEXT,
+  email TEXT NOT NULL UNIQUE,
+  tier TEXT NOT NULL DEFAULT 'nano',
+  followers INTEGER DEFAULT 0,
+  engagement_rate NUMERIC DEFAULT 0,
+  country TEXT NOT NULL,
+  ref_code TEXT UNIQUE NOT NULL,
+  cpm_agreed NUMERIC DEFAULT 0,
+  status TEXT DEFAULT 'prospect',
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+ALTER TABLE influencers ENABLE ROW LEVEL SECURITY;
+
+-- Allow reading of influencers across the board, but only super admins can manage them.
+CREATE POLICY "Public influencers reading" ON influencers
+  FOR SELECT USING (true);
+
+-- Admins can manage influencers, everyone else has no access by default.
+-- For super_admin role, we allow full access. Since we use `profiles.role = super_admin`
+-- we need to check the profile role:
+CREATE POLICY "Super admins can manage influencers." ON influencers
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'super_admin')
+  );

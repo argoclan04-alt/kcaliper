@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kcaliper — El Sistema Nervioso Central del Entrenador Moderno</title>
+  <meta name="description" content="Conecta pesajes con fotos, visualiza tendencias reales, recibe alertas por WhatsApp. El dashboard que todo coach necesita. Prueba gratis." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --violet: #6C5CE7;
+      --violet-light: #8B7CF5;
+      --cyan: #00D2FF;
+      --coral: #FF6B6B;
+      --yellow: #FFD93D;
+      --green: #22C55E;
+      --bg: #0A0A1A;
+      --card: #12122A;
+      --border: rgba(108,92,231,0.2);
+      --text: #E8E8F0;
+      --muted: rgba(232,232,240,0.55);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ---- PROGRESS BAR ---- */
+    #progress-bar {
+      position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+      z-index: 1000; transition: width 0.1s linear;
+    }
+
+    /* ---- NAV ---- */
+    nav {
+      position: fixed; top: 3px; left: 0; right: 0; z-index: 900;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 48px;
+      backdrop-filter: blur(20px);
+      background: rgba(10,10,26,0.85);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-size: 1.4rem; font-weight: 900; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      color: white; border: none; padding: 10px 24px;
+      border-radius: 50px; font-weight: 700; font-size: 0.85rem;
+      cursor: pointer; text-decoration: none; letter-spacing: 0.3px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .nav-cta:hover { transform: scale(1.05); box-shadow: 0 0 24px rgba(108,92,231,0.5); }
+
+    /* ---- SECTIONS ---- */
+    section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 100px 48px 80px; position: relative; overflow: hidden; }
+    .section-inner { max-width: 1100px; width: 100%; margin: 0 auto; }
+
+    /* ---- HERO ---- */
+    #hero {
+      background: radial-gradient(ellipse at 60% 40%, rgba(108,92,231,0.15) 0%, transparent 60%),
+                  radial-gradient(ellipse at 20% 80%, rgba(0,210,255,0.08) 0%, transparent 50%);
+      text-align: center; flex-direction: column;
+    }
+    .hero-eyebrow {
+      display: inline-block; background: rgba(108,92,231,0.15); border: 1px solid rgba(108,92,231,0.3);
+      color: var(--cyan); font-size: 0.75rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; padding: 6px 18px; border-radius: 50px;
+      margin-bottom: 28px; animation: fadeUp 0.6s ease both;
+    }
+    h1.hero-title {
+      font-size: clamp(2.8rem, 6vw, 5rem); font-weight: 900; line-height: 1.08;
+      letter-spacing: -2px; margin-bottom: 24px;
+      animation: fadeUp 0.7s ease 0.1s both;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .warm-gradient-text {
+      background: linear-gradient(135deg, #FF6B6B, #FFD93D);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.25rem); color: var(--muted); max-width: 620px;
+      margin: 0 auto 40px; animation: fadeUp 0.7s ease 0.2s both;
+    }
+    .hero-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; animation: fadeUp 0.7s ease 0.3s both; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      color: white; border: none; padding: 16px 36px; border-radius: 50px;
+      font-weight: 800; font-size: 1rem; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(108,92,231,0.4); }
+    .btn-secondary {
+      background: transparent; color: var(--text); border: 1px solid rgba(108,92,231,0.4);
+      padding: 16px 36px; border-radius: 50px; font-weight: 700; font-size: 1rem;
+      cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { background: rgba(108,92,231,0.1); border-color: var(--violet); }
+
+    /* Hero floating badges */
+    .hero-badges {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+      margin-top: 48px; animation: fadeUp 0.7s ease 0.4s both;
+    }
+    .badge {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      padding: 8px 16px; border-radius: 50px; font-size: 0.82rem; color: var(--muted);
+    }
+    .badge-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-green { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .dot-violet { background: var(--violet); box-shadow: 0 0 8px var(--violet); }
+    .dot-cyan { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+    .dot-yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+
+    /* ---- SCROLL INDICATOR ---- */
+    .scroll-indicator {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: var(--muted); font-size: 0.75rem; letter-spacing: 1px;
+      animation: pulse 2s ease infinite;
+    }
+    .scroll-arrow { width: 20px; height: 20px; border-right: 2px solid var(--violet); border-bottom: 2px solid var(--violet); transform: rotate(45deg); }
+
+    /* ---- VIDEO PLAYER MOCKUP ---- */
+    .vsl-player {
+      position: relative; border-radius: 20px; overflow: hidden;
+      background: var(--card); border: 1px solid var(--border);
+      box-shadow: 0 0 80px rgba(108,92,231,0.2);
+      margin-top: 64px; cursor: pointer;
+      animation: fadeUp 0.8s ease 0.5s both;
+    }
+    .vsl-player-inner {
+      position: relative; padding-top: 56.25%; background: linear-gradient(135deg, #0A0A1A, var(--card));
+      display: flex; flex-direction: column;
+    }
+    .vsl-scenes {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .vsl-scene {
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 40px; width: 100%; height: 100%;
+      animation: sceneIn 0.8s ease both;
+    }
+    .vsl-scene.active { display: flex; }
+    .vsl-scene-number {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--cyan); opacity: 0.7; margin-bottom: 16px;
+    }
+    .vsl-scene h2 {
+      font-size: clamp(1.4rem, 3.5vw, 2.8rem); font-weight: 900; line-height: 1.1;
+      letter-spacing: -1px; margin-bottom: 20px;
+    }
+    .vsl-scene p {
+      font-size: clamp(0.9rem, 1.8vw, 1.15rem); color: var(--muted); max-width: 600px; line-height: 1.7;
+    }
+    .scene-icon { font-size: clamp(3rem, 8vw, 6rem); margin-bottom: 24px; animation: float 3s ease-in-out infinite; }
+
+    /* Feature pill */
+    .feature-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(108,92,231,0.15); border: 1px solid rgba(108,92,231,0.3);
+      padding: 8px 20px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+      margin: 8px 6px; color: var(--text);
+    }
+    .feature-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 20px; }
+
+    /* ---- PLAYER CONTROLS ---- */
+    .player-controls {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+      padding: 40px 24px 20px;
+    }
+    .player-progress {
+      width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;
+      cursor: pointer; margin-bottom: 16px; overflow: hidden;
+    }
+    .player-progress-fill {
+      height: 100%; background: linear-gradient(90deg, var(--violet), var(--cyan));
+      border-radius: 2px; transition: width 0.3s;
+    }
+    .player-bottom {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .player-btn {
+      background: rgba(255,255,255,0.1); border: none; color: white;
+      width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-size: 1rem;
+      transition: background 0.2s;
+    }
+    .player-btn:hover { background: rgba(108,92,231,0.5); }
+    .player-play-main {
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      border: none; color: white; width: 52px; height: 52px;
+      border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; font-size: 1.3rem; transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .player-play-main:hover { transform: scale(1.1); box-shadow: 0 0 24px rgba(108,92,231,0.6); }
+    .player-time { font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+    .player-scene-indicators {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .scene-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.2);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .scene-dot.active { width: 20px; border-radius: 3px; background: var(--cyan); }
+
+    /* ---- SCENE BG GRADIENTS ---- */
+    .scene-bg-1 { background: radial-gradient(circle at 50% 50%, rgba(108,92,231,0.15), transparent 70%); }
+    .scene-bg-2 { background: radial-gradient(circle at 50% 50%, rgba(255,107,107,0.12), transparent 70%); }
+    .scene-bg-3 { background: radial-gradient(circle at 50% 50%, rgba(0,210,255,0.1), transparent 70%); }
+    .scene-bg-4 { background: radial-gradient(circle at 50% 50%, rgba(108,92,231,0.12), rgba(0,210,255,0.08), transparent 70%); }
+    .scene-bg-5 { background: radial-gradient(circle at 50% 50%, rgba(255,217,61,0.1), transparent 70%); }
+    .scene-bg-6 { background: radial-gradient(circle at 50% 50%, rgba(34,197,94,0.1), transparent 70%); }
+    .scene-bg-7 { background: radial-gradient(circle at 50% 50%, rgba(255,107,107,0.1), rgba(255,217,61,0.08), transparent 70%); }
+    .scene-bg-8 { background: radial-gradient(circle at 50% 50%, rgba(108,92,231,0.18), rgba(0,210,255,0.12), transparent 70%); }
+
+    /* ---- FEATURES GRID ---- */
+    #features { background: var(--bg); min-height: auto; padding: 80px 48px; }
+    .section-label {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--cyan); margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; letter-spacing: -1px;
+      margin-bottom: 16px; line-height: 1.1;
+    }
+    .section-sub { color: var(--muted); font-size: 1.1rem; margin-bottom: 56px; max-width: 560px; }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;
+    }
+    .feature-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 32px; position: relative; overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+      animation: fadeUp 0.6s ease both;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 60px rgba(108,92,231,0.2);
+      border-color: rgba(108,92,231,0.5);
+    }
+    .feature-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--violet), var(--cyan)); opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 56px; height: 56px; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; margin-bottom: 20px;
+    }
+    .icon-violet { background: rgba(108,92,231,0.15); }
+    .icon-cyan { background: rgba(0,210,255,0.1); }
+    .icon-coral { background: rgba(255,107,107,0.1); }
+    .icon-yellow { background: rgba(255,217,61,0.1); }
+    .icon-green { background: rgba(34,197,94,0.1); }
+    .feature-card h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 10px; }
+    .feature-card p { color: var(--muted); font-size: 0.9rem; line-height: 1.65; }
+    .feature-tag {
+      display: inline-block; background: rgba(108,92,231,0.12); border: 1px solid rgba(108,92,231,0.25);
+      color: var(--violet-light); font-size: 0.7rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 50px; margin-top: 16px;
+    }
+
+    /* ---- COMPARISON ---- */
+    #comparison { background: radial-gradient(ellipse at 50% 50%, rgba(108,92,231,0.06), transparent 70%); min-height: auto; padding: 80px 48px; }
+    .comparison-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 48px;
+    }
+    .comparison-col {
+      background: var(--card); border-radius: 20px; padding: 32px;
+      border: 1px solid var(--border);
+    }
+    .comparison-col.bad { border-color: rgba(255,107,107,0.3); }
+    .comparison-col.good { border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.04); }
+    .comparison-header {
+      display: flex; align-items: center; gap: 12px;
+      font-weight: 800; font-size: 1.1rem; margin-bottom: 24px;
+    }
+    .comp-icon { font-size: 1.5rem; }
+    .comparison-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+    .comparison-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      font-size: 0.9rem; color: var(--muted); line-height: 1.5;
+    }
+    .ci-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ---- ALERTS SECTION ---- */
+    #alerts { min-height: auto; padding: 80px 48px; }
+    .alerts-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+    .alert-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 18px 20px; display: flex; align-items: flex-start; gap: 14px;
+      margin-bottom: 12px; transition: transform 0.3s, border-color 0.3s;
+    }
+    .alert-card:hover { transform: translateX(6px); border-color: var(--violet); }
+    .alert-icon-wrap { font-size: 1.5rem; flex-shrink: 0; }
+    .alert-text h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 4px; }
+    .alert-text p { font-size: 0.82rem; color: var(--muted); }
+    .alert-badge {
+      margin-left: auto; flex-shrink: 0;
+      width: 8px; height: 8px; border-radius: 50%; background: var(--cyan);
+      box-shadow: 0 0 8px var(--cyan);
+    }
+
+    /* WhatsApp Mockup */
+    .wa-phone {
+      background: #1a1a2e; border-radius: 24px; padding: 20px 16px;
+      border: 2px solid rgba(108,92,231,0.3); max-width: 340px; margin: 0 auto;
+      box-shadow: 0 0 60px rgba(108,92,231,0.15);
+    }
+    .wa-header {
+      display: flex; align-items: center; gap: 10px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--border); margin-bottom: 16px;
+    }
+    .wa-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .wa-name { font-weight: 700; font-size: 0.9rem; }
+    .wa-status { font-size: 0.72rem; color: var(--green); }
+    .wa-messages { display: flex; flex-direction: column; gap: 10px; }
+    .wa-msg {
+      padding: 10px 14px; border-radius: 12px; max-width: 85%;
+      font-size: 0.82rem; line-height: 1.5;
+    }
+    .wa-msg.incoming {
+      background: rgba(108,92,231,0.15); border: 1px solid rgba(108,92,231,0.2);
+      align-self: flex-start; border-radius: 4px 12px 12px 12px;
+    }
+    .wa-msg.outgoing {
+      background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2);
+      align-self: flex-end; border-radius: 12px 4px 12px 12px;
+    }
+    .wa-msg.alert-msg {
+      background: rgba(255,217,61,0.1); border: 1px solid rgba(255,217,61,0.25);
+      align-self: flex-start; border-radius: 4px 12px 12px 12px;
+    }
+    .wa-time { font-size: 0.68rem; color: var(--muted); margin-top: 4px; text-align: right; }
+
+    /* ---- PRICING ---- */
+    #pricing { min-height: auto; padding: 80px 48px; background: radial-gradient(ellipse at 50% 100%, rgba(0,210,255,0.05), transparent 60%); }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 48px; }
+    .pricing-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 24px;
+      padding: 36px 32px; position: relative; overflow: hidden; transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .pricing-card:hover { transform: translateY(-8px); box-shadow: 0 24px 60px rgba(108,92,231,0.25); }
+    .pricing-card.featured {
+      border-color: var(--violet); background: linear-gradient(135deg, rgba(108,92,231,0.1), rgba(0,210,255,0.05));
+    }
+    .pricing-card.featured::before {
+      content: 'MÁS POPULAR'; position: absolute; top: 20px; right: -28px;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      color: white; font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px;
+      padding: 5px 40px; transform: rotate(45deg); white-space: nowrap;
+    }
+    .pricing-role { font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cyan); margin-bottom: 12px; }
+    .pricing-name { font-size: 1.5rem; font-weight: 900; margin-bottom: 24px; }
+    .pricing-price { margin-bottom: 8px; }
+    .pricing-original { text-decoration: line-through; color: var(--muted); font-size: 1.1rem; }
+    .pricing-amount { font-size: 3rem; font-weight: 900; letter-spacing: -2px; }
+    .pricing-period { font-size: 0.9rem; color: var(--muted); margin-bottom: 8px; }
+    .pricing-discount {
+      display: inline-block; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.3);
+      color: var(--coral); font-size: 0.72rem; font-weight: 700; letter-spacing: 1px;
+      padding: 4px 12px; border-radius: 50px; margin-bottom: 28px; text-transform: uppercase;
+    }
+    .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .pricing-feature { display: flex; align-items: center; gap: 10px; font-size: 0.88rem; color: var(--muted); }
+    .pf-check { color: var(--green); font-size: 1rem; flex-shrink: 0; }
+    .pricing-btn {
+      display: block; text-align: center; padding: 14px; border-radius: 50px;
+      font-weight: 800; font-size: 0.95rem; cursor: pointer; text-decoration: none;
+      transition: transform 0.2s, box-shadow 0.2s; border: none; width: 100%;
+    }
+    .pricing-btn.main {
+      background: linear-gradient(135deg, var(--violet), var(--cyan)); color: white;
+    }
+    .pricing-btn.main:hover { transform: scale(1.03); box-shadow: 0 0 24px rgba(108,92,231,0.5); }
+    .pricing-btn.outline {
+      background: transparent; color: var(--text); border: 2px solid var(--border);
+    }
+    .pricing-btn.outline:hover { border-color: var(--violet); color: var(--violet-light); }
+
+    /* ---- CTA FINAL ---- */
+    #cta-final {
+      min-height: auto; padding: 100px 48px;
+      background: radial-gradient(ellipse at 50% 50%, rgba(108,92,231,0.15), rgba(0,210,255,0.05), transparent 70%);
+      text-align: center; flex-direction: column;
+    }
+    .cta-title { font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 900; letter-spacing: -2px; margin-bottom: 20px; line-height: 1.05; }
+    .cta-sub { color: var(--muted); font-size: 1.15rem; max-width: 500px; margin: 0 auto 40px; }
+    .cta-guarantee {
+      display: flex; align-items: center; gap: 8px; justify-content: center;
+      color: var(--muted); font-size: 0.85rem; margin-top: 24px;
+    }
+
+    /* ---- FOOTER ---- */
+    footer {
+      padding: 40px 48px; text-align: center;
+      border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem;
+    }
+    footer .footer-brand {
+      font-weight: 900; font-size: 1.1rem; margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* ---- STATS ROW ---- */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 24px; margin-top: 64px;
+    }
+    .stat-card {
+      text-align: center; padding: 24px; background: var(--card);
+      border: 1px solid var(--border); border-radius: 16px;
+    }
+    .stat-num { font-size: 2.4rem; font-weight: 900; letter-spacing: -1px; }
+    .stat-label { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
+    /* ---- SOCIAL PROOF POPUP ---- */
+    .social-proof-popup {
+      position: fixed; bottom: 24px; left: 24px; z-index: 800;
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 14px 18px; display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4); max-width: 300px;
+      transform: translateX(-120%); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .social-proof-popup.show { transform: translateX(0); }
+    .sp-avatar {
+      width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--violet), var(--cyan));
+      display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+    }
+    .sp-text { flex: 1; }
+    .sp-name { font-weight: 700; font-size: 0.85rem; }
+    .sp-action { font-size: 0.78rem; color: var(--muted); }
+    .sp-time { font-size: 0.72rem; color: var(--cyan); margin-top: 2px; }
+
+    /* ---- ANIMATIONS ---- */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    @keyframes sceneIn {
+      from { opacity: 0; transform: scale(0.97) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes shimmer {
+      from { background-position: -200% 0; }
+      to { background-position: 200% 0; }
+    }
+    .reveal {
+      opacity: 0; transform: translateY(32px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ---- RESPONSIVE ---- */
+    @media (max-width: 768px) {
+      nav { padding: 12px 20px; }
+      section { padding: 80px 20px 60px; }
+      #features, #comparison, #alerts, #pricing, #cta-final { padding: 60px 20px; }
+      .comparison-grid { grid-template-columns: 1fr; }
+      .alerts-layout { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .hero-buttons { flex-direction: column; align-items: center; }
+      .btn-primary, .btn-secondary { width: 100%; max-width: 300px; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Progress Bar -->
+<div id="progress-bar"></div>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-logo">⚖️ kcaliper.ai</div>
+  <a href="https://kcaliper.com/early-access" class="nav-cta" id="nav-cta-btn">Activar Cuenta →</a>
+</nav>
+
+<!-- Social Proof Popup -->
+<div class="social-proof-popup" id="social-popup">
+  <div class="sp-avatar" id="sp-avatar">👨‍💼</div>
+  <div class="sp-text">
+    <div class="sp-name" id="sp-name">Coach Ramírez</div>
+    <div class="sp-action" id="sp-action">se unió al early access</div>
+    <div class="sp-time" id="sp-time">hace 3 min · México</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!-- HERO                                    -->
+<!-- ════════════════════════════════════════ -->
+<section id="hero">
+  <div class="section-inner">
+    <div class="hero-eyebrow">🧠 Para Coaches &amp; Atletas — Early Access Abierto</div>
+
+    <h1 class="hero-title">
+      El peso de tus atletas,<br />
+      <span class="gradient-text">conectado a su historia.</span><br />
+      <span class="warm-gradient-text">Visto en tiempo real.</span>
+    </h1>
+
+    <p class="hero-sub">
+      Kcaliper conecta cada pesaje con fotos de progreso, proyecta milestones, 
+      detecta desvíos automáticamente y te avisa por WhatsApp. 
+      <strong>Sin Excel. Sin perseguir atletas.</strong>
+    </p>
+
+    <div class="hero-buttons">
+      <a href="https://kcaliper.com/early-access" class="btn-primary" id="hero-cta-btn">
+        🚀 Empieza Gratis — Precio Fundador
+      </a>
+      <a href="#vsl-player" class="btn-secondary" id="hero-watch-btn">
+        ▶ Ver Demo (3 min)
+      </a>
+    </div>
+
+    <div class="hero-badges">
+      <div class="badge"><span class="badge-dot dot-green"></span> Peso + fotos vinculadas</div>
+      <div class="badge"><span class="badge-dot dot-violet"></span> Milestones inteligentes</div>
+      <div class="badge"><span class="badge-dot dot-cyan"></span> Alertas por WhatsApp</div>
+      <div class="badge"><span class="badge-dot dot-yellow"></span> Exclusión de peso anormal</div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row reveal">
+      <div class="stat-card">
+        <div class="stat-num gradient-text">847+</div>
+        <div class="stat-label">Coaches en lista de espera</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num gradient-text">$12.99</div>
+        <div class="stat-label">Clientes ilimitados / mes</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num gradient-text">40%</div>
+        <div class="stat-label">Menos abandonos reportados</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num gradient-text">DEMA</div>
+        <div class="stat-label">Tendencia real matemática</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-indicator">
+    <span>DESPLAZA</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ -->
+<!-- VSL PLAYER                             -->
+<!-- ════════════════════════════════════════ -->
+<section id="vsl-player" style="min-height:auto; padding: 0 48px 80px; display: block;">
+  <div class="section-inner">
+    <div class="vsl-player" id="vsl-player-wrap">
+      <div class="vsl-player-inner">
+        <div class="vsl-scenes">
+
+          <!-- SCENE 1: HOOK -->
+          <div class="vsl-scene scene-bg-1 active" id="scene-1" data-scene="1">
+            <div class="vsl-scene-number">01 / 08 — HOOK</div>
+            <div class="scene-icon">🎯</div>
+            <h2>¿Cuántos de tus atletas<br /><span class="gradient-text">te envían su peso cada día</span>... sin recordatorio?</h2>
+            <p>Si eres de los coaches que quiere dar un servicio diferente — no uno más — esto es para ti.</p>
+          </div>
+
+          <!-- SCENE 2: PROBLEMA -->
+          <div class="vsl-scene scene-bg-2" id="scene-2" data-scene="2">
+            <div class="vsl-scene-number">02 / 08 — EL PROBLEMA</div>
+            <div class="scene-icon">😩</div>
+            <h2>La <span class="warm-gradient-text">brecha de los 29 días</span><br />destruye tus resultados</h2>
+            <p>A las 3 semanas, tu cliente sube 0.4kg, entra en pánico y abandona una dieta que SÍ funcionaba. Tú tienes 20+ clientes. <strong>No puedes darle tranquilidad a cada uno.</strong></p>
+          </div>
+
+          <!-- SCENE 3: FOTOS + PESAJES -->
+          <div class="vsl-scene scene-bg-3" id="scene-3" data-scene="3">
+            <div class="vsl-scene-number">03 / 08 — PESO + FOTOS</div>
+            <div class="scene-icon">📸</div>
+            <h2>Cada pesaje,<br /><span class="gradient-text">vinculado a su foto.</span><br />Todo en una línea de tiempo.</h2>
+            <p>Compara el cuerpo de tu atleta en el día 1 vs el día 45. No sólo el número — la <strong>transformación visual real</strong> conectada a cada entrada de peso.</p>
+            <div class="feature-pills">
+              <span class="feature-pill">📷 Front / Side / Back</span>
+              <span class="feature-pill">📅 Línea de tiempo</span>
+              <span class="feature-pill">🔍 Comparativo lado a lado</span>
+            </div>
+          </div>
+
+          <!-- SCENE 4: MILESTONES + RITMO -->
+          <div class="vsl-scene scene-bg-4" id="scene-4" data-scene="4">
+            <div class="vsl-scene-number">04 / 08 — MILESTONES Y TENDENCIA</div>
+            <div class="scene-icon">🏆</div>
+            <h2>Proyección de peso,<br /><span class="gradient-text">milestones automáticos.</span></h2>
+            <p>Configura la meta: cuándo debería llegar y a qué ritmo. Kcaliper proyecta la trayectoria con DEMA — <strong>la única tendencia matemática real</strong>, sin el ruido de las fluctuaciones diarias.</p>
+            <div class="feature-pills">
+              <span class="feature-pill">📉 Target -0.5 kg/sem</span>
+              <span class="feature-pill">🎯 Milestone configurado</span>
+              <span class="feature-pill">📊 Tendencia DEMA</span>
+            </div>
+          </div>
+
+          <!-- SCENE 5: ALERTAS WHATSAPP -->
+          <div class="vsl-scene scene-bg-5" id="scene-5" data-scene="5">
+            <div class="vsl-scene-number">05 / 08 — ALERTAS WHATSAPP</div>
+            <div class="scene-icon">💬</div>
+            <h2>Tu WhatsApp te avisa<br /><span class="warm-gradient-text">antes de que él se frustre.</span></h2>
+            <p>Alerta de desviación de ritmo. Milestone alcanzado. Peso mínimo histórico. Sin registro por 3 días. <strong>El sistema trabaja. Tú decides cuándo actuar.</strong></p>
+            <div class="feature-pills">
+              <span class="feature-pill">🔔 Desviación de tasa</span>
+              <span class="feature-pill">🎉 Nuevo peso mínimo</span>
+              <span class="feature-pill">⚠️ Sin registro 3 días</span>
+              <span class="feature-pill">✅ Racha de 14 días</span>
+            </div>
+          </div>
+
+          <!-- SCENE 6: EXCLUSION DE PESO -->
+          <div class="vsl-scene scene-bg-6" id="scene-6" data-scene="6">
+            <div class="vsl-scene-number">06 / 08 — EXCLUSIÓN INTELIGENTE</div>
+            <div class="scene-icon">🧠</div>
+            <h2>¿Pesaje post-viaje?<br /><span class="gradient-text">Exclúyelo.</span><br />Los cálculos siguen perfectos.</h2>
+            <p>Marca como excluido cualquier pesaje en condiciones anormales — retención de agua, menstruación, post-vuelo. <strong>Ese dato no contamina el DEMA ni el ritmo semanal.</strong></p>
+            <div class="feature-pills">
+              <span class="feature-pill">✈️ Post-viaje</span>
+              <span class="feature-pill">💧 Retención de agua</span>
+              <span class="feature-pill">🔒 DEMA protegido</span>
+            </div>
+          </div>
+
+          <!-- SCENE 7: ATLETA AUTÓNOMO + IA -->
+          <div class="vsl-scene scene-bg-7" id="scene-7" data-scene="7">
+            <div class="vsl-scene-number">07 / 08 — ATLETA + IA</div>
+            <div class="scene-icon">🤖</div>
+            <h2>¿No tienes coach?<br /><span class="gradient-text">CaliBot es tu coach.</span><br />Entrena tu IA.</h2>
+            <p>Úsalo como atleta autónomo con nuestra IA entrenada. ¿Eres coach? CaliBot aprende <em>tu tono</em>. Tus atletas reciben respuestas tuyas — <strong>automáticas, 24/7.</strong></p>
+            <div class="feature-pills">
+              <span class="feature-pill">🤖 CaliBot IA</span>
+              <span class="feature-pill">👤 Uso solo / coach</span>
+              <span class="feature-pill">🧬 Personalizado</span>
+            </div>
+          </div>
+
+          <!-- SCENE 8: CTA -->
+          <div class="vsl-scene scene-bg-8" id="scene-8" data-scene="8">
+            <div class="vsl-scene-number">08 / 08 — ACCIÓN</div>
+            <div class="scene-icon" style="animation-delay: 0s;">🚀</div>
+            <h2>Activa tu cuenta.<br /><span class="gradient-text">$12.99/mes.</span><br /><span class="warm-gradient-text">Clientes ilimitados.</span></h2>
+            <p>Solo 200 spots de fundador disponibles. Precio congelado de por vida mientras tu suscripción esté activa. <strong>Kcaliper — el sistema nervioso central del entrenador moderno.</strong></p>
+            <div style="margin-top:24px;">
+              <a href="https://kcaliper.com/early-access" class="btn-primary" id="vsl-cta-btn" style="font-size:1.1rem; padding: 18px 44px;">
+                Ser Fundador Ahora →
+              </a>
+            </div>
+          </div>
+
+        </div><!-- /vsl-scenes -->
+
+        <!-- Player Controls -->
+        <div class="player-controls">
+          <div class="player-progress" id="player-progress" onclick="seekScene(event)">
+            <div class="player-progress-fill" id="player-progress-fill"></div>
+          </div>
+          <div class="player-bottom">
+            <div style="display:flex; gap:8px; align-items:center;">
+              <button class="player-btn" id="prev-btn" onclick="changeScene(-1)" title="Anterior">◀</button>
+              <button class="player-play-main" id="play-btn" onclick="togglePlay()" title="Play/Pause">▶</button>
+              <button class="player-btn" id="next-btn" onclick="changeScene(1)" title="Siguiente">▶</button>
+            </div>
+
+            <div class="player-scene-indicators" id="scene-indicators"></div>
+
+            <span class="player-time" id="player-time-label">Escena 1 de 8</span>
+          </div>
+        </div>
+
+      </div><!-- /vsl-player-inner -->
+    </div><!-- /vsl-player -->
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ -->
+<!-- FEATURES                               -->
+<!-- ════════════════════════════════════════ -->
+<section id="features">
+  <div class="section-inner">
+    <div class="section-label">✦ Funcionalidades Clave</div>
+    <h2 class="section-title">Todo lo que tu panel<br /><span class="gradient-text">nunca tuvo.</span></h2>
+    <p class="section-sub">Diseñado específicamente para coaches de peso corporal. Sin ruido. Solo lo que importa.</p>
+
+    <div class="features-grid">
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon icon-violet">📸</div>
+        <h3>Pesajes vinculados a fotos</h3>
+        <p>Cada entrada de peso puede llevar un set de fotos front/side/back. Ve la transformación real junto al número — compara cualquier fecha con cualquier otra.</p>
+        <span class="feature-tag">✅ Activo</span>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon icon-cyan">📊</div>
+        <h3>DEMA — Tendencia Real</h3>
+        <p>Double Exponential Moving Average. Elimina el ruido de fluctuaciones diarias. La única herramienta del mercado con tendencia matemática real en tiempo real.</p>
+        <span class="feature-tag">✅ Activo</span>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon icon-yellow">🏆</div>
+        <h3>Milestones + Ritmo Proyectado</h3>
+        <p>Configura el peso meta y el ritmo semanal objetivo. Kcaliper proyecta cuándo llegará y te avisa cuando lo alcanza. El atleta ve su progreso hacia la meta.</p>
+        <span class="feature-tag">✅ Activo</span>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="feature-icon icon-coral">💬</div>
+        <h3>Alertas Inteligentes por WhatsApp</h3>
+        <p>Ritmo fuera de rango, milestone alcanzado, nuevo peso mínimo, sin registro por N días. Tú configuras qué alertas quieres. El sistema te llama cuando algo pasa.</p>
+        <span class="feature-tag">Próximamente</span>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="feature-icon icon-green">🧠</div>
+        <h3>Exclusión de Peso Corporal</h3>
+        <p>¿Tu atleta voló 10 horas? ¿Periodo? ¿Comida alta en sodio? Marca ese pesaje como excluido. No contamina el DEMA ni el cálculo del ritmo semanal.</p>
+        <span class="feature-tag">✅ Activo</span>
+      </div>
+
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="feature-icon icon-violet">🤖</div>
+        <h3>CaliBot — IA Entrenada en tu Tono</h3>
+        <p>Para atletas sin coach: CaliBot los acompaña 24/7. Para coaches: el bot aprende tu estilo y responde por ti. Nunca más "¿Eso es normal?" sin respuesta.</p>
+        <span class="feature-tag">Próximamente</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ -->
+<!-- ALERTS + WHATSAPP                      -->
+<!-- ════════════════════════════════════════ -->
+<section id="alerts">
+  <div class="section-inner">
+    <div class="alerts-layout">
+      <!-- Left: Alerts list -->
+      <div class="reveal">
+        <div class="section-label">✦ Sistema de Alertas</div>
+        <h2 class="section-title" style="font-size: clamp(1.8rem, 3.5vw, 2.6rem);">Tú priorizas.<br /><span class="gradient-text">Nosotros vigilamos.</span></h2>
+        <p class="section-sub" style="font-size:0.95rem;">El dashboard te muestra todo. El sistema te llama solo cuando importa.</p>
+
+        <div class="alert-card">
+          <div class="alert-icon-wrap">🎉</div>
+          <div class="alert-text">
+            <h4>Valentina Torres — Nuevo Peso Mínimo</h4>
+            <p>Alcanzó 65.8 kg — ¡mínimo histórico! Un mensaje de "¡increíble!" es todo lo que necesita.</p>
+          </div>
+          <div class="alert-badge"></div>
+        </div>
+
+        <div class="alert-card">
+          <div class="alert-icon-wrap">⚠️</div>
+          <div class="alert-text">
+            <h4>Diego Morales — Desviación de Ritmo</h4>
+            <p>Ritmo actual: <strong>-0.8 kg/sem</strong>. Meta: -0.5. Algo no va bien. Actúa antes de que Diego se frustre.</p>
+          </div>
+          <div class="alert-badge" style="background: var(--coral); box-shadow: 0 0 8px var(--coral);"></div>
+        </div>
+
+        <div class="alert-card">
+          <div class="alert-icon-wrap">🎯</div>
+          <div class="alert-text">
+            <h4>Camila Herrera — Milestone Alcanzado</h4>
+            <p>Superó los 63.5 kg objetivo. Es momento de re-configurar su próxima meta.</p>
+          </div>
+          <div class="alert-badge" style="background: var(--yellow); box-shadow: 0 0 8px var(--yellow);"></div>
+        </div>
+
+        <div class="alert-card">
+          <div class="alert-icon-wrap">🏆</div>
+          <div class="alert-text">
+            <h4>Isabella Mendoza — Racha de 14 días</h4>
+            <p>Ha mantenido su ritmo objetivo por 2 semanas consecutivas. Reconócela.</p>
+          </div>
+          <div class="alert-badge" style="background: var(--green); box-shadow: 0 0 8px var(--green);"></div>
+        </div>
+      </div>
+
+      <!-- Right: WhatsApp Phone -->
+      <div class="reveal reveal-delay-2">
+        <div class="wa-phone">
+          <div class="wa-header">
+            <div class="wa-avatar">🤖</div>
+            <div>
+              <div class="wa-name">CaliBot · Kcaliper</div>
+              <div class="wa-status">● En línea ahora</div>
+            </div>
+          </div>
+          <div class="wa-messages">
+            <div class="wa-msg alert-msg">
+              🎉 <strong>¡Valentina!</strong> Alcanzaste un nuevo mínimo histórico: <strong>65.8 kg</strong>. Tu tendencia real sigue en -0.31/semana. ¡Increíble!
+              <div class="wa-time" style="text-align:left; color: var(--yellow);">CaliBot · hace 2 min</div>
+            </div>
+            <div class="wa-msg outgoing">
+              ¡Gracias! Y sube el dato al entrenador ✅
+              <div class="wa-time">Valentina · 10:34</div>
+            </div>
+            <div class="wa-msg incoming">
+              📊 Tu ritmo de hoy: <strong>-0.31 kg/semana</strong>. Meta de tu coach: -0.4. Vas bien — solo un pequeño ajuste posible. ¿Quieres que le avise? 
+              <div class="wa-time" style="text-align:left;">CaliBot · 10:35</div>
+            </div>
+            <div class="wa-msg alert-msg">
+              ⚠️ <strong>Coach Alerta:</strong> Diego Morales se está desviando. Ritmo actual -0.8 kg/sem vs meta -0.5. Considera ajustar calorías esta semana.
+              <div class="wa-time" style="text-align:left; color: var(--coral);">Coach Dashboard · 10:41</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ -->
+<!-- COMPARISON                             -->
+<!-- ════════════════════════════════════════ -->
+<section id="comparison">
+  <div class="section-inner">
+    <div class="section-label reveal">✦ Antes vs Después</div>
+    <h2 class="section-title reveal">¿Cómo <span class="warm-gradient-text">gestionas hoy</span><br />vs cómo podrías?</h2>
+
+    <div class="comparison-grid">
+      <div class="comparison-col bad reveal reveal-delay-1">
+        <div class="comparison-header">
+          <span class="comp-icon">😤</span>
+          <span style="color: var(--coral);">Sin Kcaliper</span>
+        </div>
+        <ul class="comparison-list">
+          <li class="comparison-item"><span class="ci-icon">❌</span> Perseguir a cada atleta por WhatsApp para que te manden el peso</li>
+          <li class="comparison-item"><span class="ci-icon">❌</span> Excel con números sueltos sin contexto visual ni tendencia</li>
+          <li class="comparison-item"><span class="ci-icon">❌</span> El atleta abandona sin saber que su tendencia REAL iba bien</li>
+          <li class="comparison-item"><span class="ci-icon">❌</span> Fotos de progreso en WhatsApp, revueltas, sin fecha ni contexto</li>
+          <li class="comparison-item"><span class="ci-icon">❌</span> Pagar $45+/mes en herramientas que cobran por atleta</li>
+          <li class="comparison-item"><span class="ci-icon">❌</span> Un pesaje post-vuelo arruina los cálculos del mes completo</li>
+          <li class="comparison-item"><span class="ci-icon">❌</span> No sabes si tu atleta está en racha o hundiéndose hasta que ya es tarde</li>
+        </ul>
+      </div>
+
+      <div class="comparison-col good reveal reveal-delay-2">
+        <div class="comparison-header">
+          <span class="comp-icon">⚡</span>
+          <span style="color: var(--green);">Con Kcaliper</span>
+        </div>
+        <ul class="comparison-list">
+          <li class="comparison-item"><span class="ci-icon">✅</span> El atleta registra, el sistema te avisa — sin perseguir a nadie</li>
+          <li class="comparison-item"><span class="ci-icon">✅</span> Dashboard unificado: peso, DEMA, ritmo, fotos y milestones por atleta</li>
+          <li class="comparison-item"><span class="ci-icon">✅</span> El atleta ve su tendencia real y entiende por qué sigue igual</li>
+          <li class="comparison-item"><span class="ci-icon">✅</span> Cada foto vinculada a su fecha y peso correspondiente</li>
+          <li class="comparison-item"><span class="ci-icon">✅</span> $12.99/mes para todos los atletas que quieras</li>
+          <li class="comparison-item"><span class="ci-icon">✅</span> Excluye pesajes anómalos — los cálculos permanecen puros</li>
+          <li class="comparison-item"><span class="ci-icon">✅</span> Alerta en tiempo real de desviaciones, logros y racha — antes de que él lo sienta</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ -->
+<!-- PRICING                                -->
+<!-- ════════════════════════════════════════ -->
+<section id="pricing">
+  <div class="section-inner">
+    <div class="section-label reveal">✦ Precios Fundador</div>
+    <h2 class="section-title reveal">Precio que se<br /><span class="gradient-text">congela para siempre.</span></h2>
+    <p class="section-sub reveal">Solo los primeros 200 coaches/atletas tienen acceso al precio fundador. Activo mientras tu suscripción lo esté.</p>
+
+    <div class="pricing-grid">
+      <!-- Atleta Pro -->
+      <div class="pricing-card reveal reveal-delay-1">
+        <div class="pricing-role">Para Atletas</div>
+        <div class="pricing-name">Atleta Pro</div>
+        <div class="pricing-price">
+          <div class="pricing-original">$9.99/mes</div>
+          <div class="pricing-amount gradient-text">$3.99</div>
+        </div>
+        <div class="pricing-period">/ mes · precio fundador</div>
+        <div class="pricing-discount">60% OFF de por vida</div>
+        <ul class="pricing-features">
+          <li class="pricing-feature"><span class="pf-check">✓</span> CaliBot IA — Coach personal 24/7</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Tendencia DEMA en tiempo real</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Fotos de progreso vinculadas</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Milestones y alertas personales</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Exclusión de pesajes anormales</li>
+        </ul>
+        <a href="https://kcaliper.com/early-access" class="pricing-btn outline" id="atleta-pro-btn">Empezar como Atleta</a>
+      </div>
+
+      <!-- Atleta Legend -->
+      <div class="pricing-card reveal reveal-delay-2">
+        <div class="pricing-role">Para Atletas</div>
+        <div class="pricing-name">Atleta Legend</div>
+        <div class="pricing-price">
+          <div class="pricing-original">$47.88/año</div>
+          <div class="pricing-amount warm-gradient-text">$12.90</div>
+        </div>
+        <div class="pricing-period">/ año · ($1.07 / mes)</div>
+        <div class="pricing-discount">73% OFF — Mejor valor</div>
+        <ul class="pricing-features">
+          <li class="pricing-feature"><span class="pf-check">✓</span> Todo lo del plan Pro</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Soporte prioritario</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Acceso vitalicio al precio fundador</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Funciones beta anticipadas</li>
+        </ul>
+        <a href="https://kcaliper.com/early-access" class="pricing-btn outline" id="atleta-legend-btn">Bloquear Precio Anual</a>
+      </div>
+
+      <!-- Coach Professional -->
+      <div class="pricing-card featured reveal reveal-delay-3">
+        <div class="pricing-role">Para Coaches</div>
+        <div class="pricing-name">Coach Professional</div>
+        <div class="pricing-price">
+          <div class="pricing-amount gradient-text">$12.99</div>
+        </div>
+        <div class="pricing-period">/ mes · clientes ilimitados</div>
+        <div class="pricing-discount">vs $45+/mes Trainerize</div>
+        <ul class="pricing-features">
+          <li class="pricing-feature"><span class="pf-check">✓</span> Dashboard unificado de coach</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Atletas ilimitados</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Sistema de alertas inteligentes</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Solicitud y galería de fotos</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Milestones y ritmos por cliente</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> CaliBot con tu tono (próx.)</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Exportación de historial</li>
+        </ul>
+        <a href="https://kcaliper.com/early-access" class="pricing-btn main" id="coach-pro-btn">Activar Dashboard Coach →</a>
+      </div>
+
+      <!-- Coach Global Elite -->
+      <div class="pricing-card reveal reveal-delay-4">
+        <div class="pricing-role">Para Coaches</div>
+        <div class="pricing-name">Coach Global Elite</div>
+        <div class="pricing-price">
+          <div class="pricing-original">$155.88/año</div>
+          <div class="pricing-amount gradient-text">$99.90</div>
+        </div>
+        <div class="pricing-period">/ año · ($8.33 / mes)</div>
+        <div class="pricing-discount">35% OFF Precio Fundador</div>
+        <ul class="pricing-features">
+          <li class="pricing-feature"><span class="pf-check">✓</span> Todo lo del plan Professional</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Soporte 24/7 prioritario</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Precio congelado de por vida</li>
+          <li class="pricing-feature"><span class="pf-check">✓</span> Acceso a funciones beta</li>
+        </ul>
+        <a href="https://kcaliper.com/early-access" class="pricing-btn outline" id="coach-elite-btn">Bloquear Precio Anual Elite</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ -->
+<!-- CTA FINAL                              -->
+<!-- ════════════════════════════════════════ -->
+<section id="cta-final">
+  <div class="section-inner">
+    <div class="hero-eyebrow reveal">🔥 Solo quedan spots limitados de fundador</div>
+    <h2 class="cta-title reveal">Tu transformación empieza<br /><span class="gradient-text">con datos reales.</span></h2>
+    <p class="cta-sub reveal">Únete a los coaches y atletas que ya dejaron de adivinar y empezaron a medir. <strong>Kcaliper — nunca más estarás solo.</strong></p>
+
+    <div class="hero-buttons reveal">
+      <a href="https://kcaliper.com/early-access" class="btn-primary" id="final-cta-main-btn" style="font-size:1.1rem; padding: 18px 44px;">
+        🚀 Activar Cuenta Fundador
+      </a>
+      <a href="https://kcaliper.com/coach" class="btn-secondary" id="final-cta-coach-btn">
+        👨‍💼 Soy Coach — Ver Dashboard
+      </a>
+    </div>
+
+    <div class="cta-guarantee reveal">
+      🔒 Sin tarjeta requerida para explorar · Precio fundador congelado de por vida · Cancela cuando quieras
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════ -->
+<!-- FOOTER                                 -->
+<!-- ════════════════════════════════════════ -->
+<footer>
+  <div class="footer-brand">⚖️ kcaliper.ai</div>
+  <p>El sistema nervioso central del entrenador moderno.</p>
+  <p style="margin-top:8px; font-size:0.78rem;">© 2026 ARGO · Confidencial — Solo Equipo Interno y Agencia de Marketing</p>
+</footer>
+
+<!-- ════════════════════════════════════════ -->
+<!-- JAVASCRIPT                             -->
+<!-- ════════════════════════════════════════ -->
+<script>
+  // ---- Progress Bar ----
+  window.addEventListener('scroll', () => {
+    const scrolled = window.scrollY;
+    const total = document.body.scrollHeight - window.innerHeight;
+    document.getElementById('progress-bar').style.width = (scrolled / total * 100) + '%';
+  });
+
+  // ---- VSL Player ----
+  const TOTAL_SCENES = 8;
+  let currentScene = 1;
+  let isPlaying = false;
+  let playInterval = null;
+  const SCENE_DURATION = 5500; // ms per scene
+
+  // Build scene indicators
+  const indicatorsEl = document.getElementById('scene-indicators');
+  for (let i = 1; i <= TOTAL_SCENES; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'scene-dot' + (i === 1 ? ' active' : '');
+    dot.dataset.scene = i;
+    dot.onclick = () => goToScene(i);
+    indicatorsEl.appendChild(dot);
+  }
+
+  function updateUI() {
+    // Scenes
+    document.querySelectorAll('.vsl-scene').forEach(s => {
+      s.classList.toggle('active', parseInt(s.dataset.scene) === currentScene);
+    });
+    // Dots
+    document.querySelectorAll('.scene-dot').forEach(d => {
+      d.classList.toggle('active', parseInt(d.dataset.scene) === currentScene);
+    });
+    // Progress fill
+    document.getElementById('player-progress-fill').style.width = ((currentScene / TOTAL_SCENES) * 100) + '%';
+    // Time label
+    document.getElementById('player-time-label').textContent = `Escena ${currentScene} de ${TOTAL_SCENES}`;
+    // Play button icon
+    document.getElementById('play-btn').textContent = isPlaying ? '⏸' : '▶';
+  }
+
+  function goToScene(n) {
+    currentScene = Math.max(1, Math.min(TOTAL_SCENES, n));
+    updateUI();
+  }
+
+  function changeScene(dir) {
+    goToScene(currentScene + dir);
+    if (isPlaying) { clearInterval(playInterval); startAutoPlay(); }
+  }
+
+  function startAutoPlay() {
+    playInterval = setInterval(() => {
+      if (currentScene >= TOTAL_SCENES) { stopPlay(); return; }
+      currentScene++;
+      updateUI();
+    }, SCENE_DURATION);
+  }
+
+  function stopPlay() {
+    clearInterval(playInterval);
+    isPlaying = false;
+    document.getElementById('play-btn').textContent = '▶';
+  }
+
+  function togglePlay() {
+    if (isPlaying) {
+      stopPlay();
+    } else {
+      isPlaying = true;
+      document.getElementById('play-btn').textContent = '⏸';
+      if (currentScene >= TOTAL_SCENES) { currentScene = 1; updateUI(); }
+      startAutoPlay();
+    }
+  }
+
+  function seekScene(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    goToScene(Math.ceil(pct * TOTAL_SCENES));
+  }
+
+  // Initialize
+  updateUI();
+
+  // ---- Scroll Reveal ----
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.1 });
+  revealEls.forEach(el => io.observe(el));
+
+  // ---- Social Proof Popup ----
+  const proofs = [
+    { emoji: '👨‍💼', name: 'Coach Ramírez', action: 'se unió al early access', time: 'hace 2 min · México' },
+    { emoji: '👩‍🏋️', name: 'Valentina G.', action: 'registró su primer pesaje', time: 'hace 4 min · Colombia' },
+    { emoji: '💪', name: 'Coach Esteban A.', action: 'conectó 6 atletas', time: 'hace 7 min · Ecuador' },
+    { emoji: '🥇', name: 'Daniela R.', action: 'alcanzó su peso mínimo', time: 'hace 11 min · Argentina' },
+    { emoji: '🧬', name: 'Coach Mora', action: 'activó plan fundador', time: 'hace 15 min · España' },
+    { emoji: '📊', name: 'Sebastián C.', action: 'configuró su milestone', time: 'hace 19 min · Perú' },
+  ];
+  let proofIdx = 0;
+  const popup = document.getElementById('social-popup');
+
+  function showProof() {
+    const p = proofs[proofIdx % proofs.length];
+    document.getElementById('sp-avatar').textContent = p.emoji;
+    document.getElementById('sp-name').textContent = p.name;
+    document.getElementById('sp-action').textContent = p.action;
+    document.getElementById('sp-time').textContent = p.time;
+    popup.classList.add('show');
+    setTimeout(() => popup.classList.remove('show'), 3500);
+    proofIdx++;
+  }
+
+  setTimeout(showProof, 4000);
+  setInterval(showProof, 9000);
+
+  // ---- Keyboard Controls ----
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') changeScene(1);
+    if (e.key === 'ArrowLeft') changeScene(-1);
+    if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  });
+</script>
+</body>
+</html>

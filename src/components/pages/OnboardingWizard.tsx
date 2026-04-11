@@ -10,8 +10,12 @@ type GlobalStep = 'role' | 'questions' | 'analyzing' | 'tutorial' | 'paywall';
 type Role = 'athlete' | 'coach' | null;
 
 export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) => {
-  const [globalStep, setGlobalStep] = useState<string>('role');
-  const [role, setRole] = useState<string | null>(null);
+  // Initialize with role from localStorage if available, jump straight to questions
+  const storedAuth = typeof window !== 'undefined' ? localStorage.getItem('kcaliper_auth') : null;
+  const initialRole = storedAuth ? JSON.parse(storedAuth).role : 'athlete';
+  
+  const [globalStep, setGlobalStep] = useState<string>('questions');
+  const [role, setRole] = useState<string | null>(initialRole);
 
   // Animation specific UI state
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -60,9 +64,34 @@ export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) 
     }, 300);
   };
 
-  const startAnalyzing = () => {
+  const startAnalyzing = async () => {
     setGlobalStep('analyzing');
     setIsTransitioning(false);
+
+    // GUARDAR PESO REAL EN LA BASE DE DATOS PARA ATLETAS
+    if (role === 'athlete' && weightValue) {
+       const wValue = parseFloat(weightValue);
+       if (!isNaN(wValue)) {
+          // Si eligen libras, Supabase espera KG o dependiendo del setup 
+          // pero como es demo simplificada, lo guardamos directo 
+          try {
+             // Correct path to reach src/lib/supabase from src/components/pages/
+             const { supabase } = await import('../../lib/supabase');
+             const { data: { session } } = await supabase.auth.getSession();
+             if (session) {
+                await supabase.from('weight_entries').insert({
+                   client_id: session.user.id,
+                   date: new Date().toISOString().split('T')[0],
+                   weight: unit === 'lbs' ? Number((wValue / 2.20462).toFixed(2)) : wValue,
+                   notes: 'Peso Inicial (Onboarding)',
+                   recorded_by: 'client'
+                });
+             }
+          } catch (err) {
+             console.error("Error saving initial weight:", err);
+          }
+       }
+    }
 
     setTimeout(() => setLoadingText('Calculando algoritmos DEMA...'), 1200);
     setTimeout(() => setLoadingText('Preparando a CaliBot...'), 2400);
@@ -79,7 +108,8 @@ export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) 
         setIsTransitioning(false);
       }, 300);
     } else {
-      goToNextGlobal('paywall');
+      localStorage.setItem('kcaliper_onboarding_done', 'true');
+      onComplete();
     }
   };
 
@@ -131,7 +161,7 @@ export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) 
         Elige tu Ruta
       </h2>
       <p className="text-gray-400 mb-10 text-base">
-        kCaliper.ai adapta su inteligencia matemática al entorno en el que compites.
+        kcaliper.com adapta su inteligencia matemática al entorno en el que compites.
       </p>
 
       <div className="w-full space-y-4">
@@ -303,9 +333,15 @@ export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) 
 
   const renderAnalyzing = () => (
     <div className="flex flex-col items-center justify-center w-full h-full text-center px-4">
-      <Loader2 className="w-12 h-12 text-[var(--fp-violet)] animate-spin mb-6" />
-      <h2 className="text-2xl font-bold text-white mb-2">{loadingText}</h2>
-      <p className="text-gray-500 text-sm">Personalizando tu entorno...</p>
+      <motion.div 
+        animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
+        transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+        className="w-24 h-24 mb-8"
+      >
+        <Loader2 className="w-full h-full text-[var(--fp-cyan)] opacity-80" />
+      </motion.div>
+      <h2 className="text-3xl font-bold text-white mb-4">CaliBot Processing...</h2>
+      <p className="text-gray-400 text-lg animate-pulse">{loadingText}</p>
     </div>
   );
 

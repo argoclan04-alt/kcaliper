@@ -1,0 +1,82 @@
+# Copy oficial de kCaliper.ai (Landing Original)
+
+Este documento contiene todo el texto estratégico de las versiones originales para ser migrado a la nueva landing page premium.
+
+---
+
+## 1. Versión ATLETA (LandingPage.tsx)
+
+### [Banner Superior - Urgencia]
+- **Texto:** 🔥 PRE-LANZAMIENTO — 60% de descuento solo para los primeros fundadores · Quedan pocas plazas · Asegura tu lugar →
+
+### [Hero Section]
+- **Badge:** Tu Coach de IA Personal (uppercase)
+- **H1:** Nunca más estarás **solo en tu transformación.**
+- **Subheadline:** Kcaliper AI te explica cada cambio de peso, te dice si realmente estás progresando, y te acompaña como un coach objetivo 24/7. Sin pánico. Sin adivinar. Solo ciencia.
+- **CTA Principal:** Quiero Acceso Anticipado
+- **Micro-copy:** Gratis · Solo deja tu email
+
+### [Simulación de Chat WhatsApp - CaliBot]
+- **Bot:** "Buenos días María 👋 Veo que hoy marcaste 72.1 kg. Tu tendencia DEMA sigue bajando (-0.28 kg/semana). ¡Vas perfecto! 💪"
+- **Usuario:** "Pero ayer subí 0.4kg 😰"
+- **Bot:** "Tranquila — eso es retención de agua normal. Tu tendencia REAL de grasa sigue en -0.28/semana. Mira tu gráfica de los últimos 30 días 📊"
+- **Usuario:** "Wow 😍 me quedo más tranquila, gracias!"
+- **Bot:** "Para eso estoy 🤖✨ ¡Sigue así que vas increíble! ¿Te recuerdo mañana a las 8am?"
+- **Usuario:** "Siii porfa 🙏"
+
+### [Barra de Urgencia Secundaria]
+- **Texto:** 🚀 Lanzamiento pronto — Acceso anticipado con 60% OFF
+
+### [Sección Problema]
+- **Título:** ¿Te ha pasado esto? No estás solo.
+- **Card 1 (😰):** Subiste 0.5kg y entraste en pánico. (Fue solo agua. Pero nadie te lo explicó y cambiaste toda tu dieta por nada.)
+- **Card 2 (🤷):** Tu peso sube y baja sin sentido. (Sin un análisis matemático real, no sabes si estás ganando grasa o solo reteniendo líquidos.)
+- **Card 3 (😞):** Te rindes porque "no funciona". (Sin retroalimentación objetiva, abandonas dietas que SÍ estaban funcionando.)
+
+### [Sección Solución]
+- **Texto:** Todo lo que hace un coach humano, **ahora lo tienes 24/7 con IA.**
+- **Descripción:** Kcaliper AI analiza tus datos con matemáticas avanzadas (DEMA) y te acompaña en cada paso. Nunca más adivinas. Siempre sabes qué pasa.
+
+### [Funciones (Features)]
+1. **Coach IA Personal:** CaliBot analiza cada pesaje y te explica por qué tu peso cambió (agua, estrés, ciclo menstrual).
+2. **Tendencia Real (DEMA):** Ve tu progreso real eliminando el ruido del agua y la inflamación.
+3. **Fotos de Progreso:** Sube tus fotos y ve cómo se ve tu cuerpo en cada peso. El "look por peso" es clave.
+4. **Milestones Inteligentes:** Configura metas y celebra cuando alcanzas un nuevo mínimo.
+5. **Recordatorios Proactivos:** CaliBot te recuerda pesarte para mantener adherencia 100%.
+6. **Look por Peso:** Compara cómo te veías a 75kg vs 72kg para entender tu composición real.
+
+### [FAQ - Preguntas Frecuentes]
+- **Fluctuaciones:** Explicación de por qué el peso sube aunque comas bien (DEMA).
+- **CaliBot:** Cómo funciona la IA como auditor objetivo.
+- **Coach Humano:** Kcaliper no lo reemplaza, lo complementa o te permite ser independiente.
+
+---
+
+## 2. Versión COACH (CoachLandingPage.tsx)
+
+### [Banner Superior - Pro]
+- **Texto:** 🎯 ACCESO COACH — Escala tu coaching con IA · Clientes ilimitados · $12.99/mes · Registrar mi equipo →
+
+### [Hero Section]
+- **Badge:** Para Coaches y Nutricionistas
+- **H1:** Deja de perseguir atletas. **Kcaliper lo hace por ti.**
+- **Subheadline:** Dashboard profesional con alertas inteligentes, seguimiento automatizado, y CaliBot que audita a tus atletas. Más tiempo para entrenar, menos tiempo persiguiendo datos.
+- **CTA:** Solicitar Acceso Coach ($12.99/mes · Clientes ilimitados)
+
+### [Features para Coaches]
+1. **Dashboard Unificado:** Todos tus atletas en una pantalla con métricas clave y estados de urgencia.
+2. **Alertas Inteligentes:** Notificaciones solo cuando un atleta se desvía de su objetivo.
+3. **Fotos de Progreso:** Solicita y recibe fotos organizadas automáticamente.
+4. **Milestones por Atleta:** Configura metas individuales y aumenta la motivación del cliente.
+5. **Recordatorios Automáticos:** CaliBot hace el "follow-up" por ti para que se pesen.
+6. **Historial Completo:** Acceso total a los datos históricos con exportación.
+
+### [Cómo Funciona (Workflow)]
+1. **Paso 1:** Te suscribes como Coach ($12.99/mes).
+2. **Paso 2:** Tus clientes crean su cuenta de atleta ($3.99/mes).
+3. **Paso 3:** Tú gestionas todo desde el dashboard centralizado.
+
+### [Pricing Oficial]
+- **Atleta Pro:** $3.99/mes (DEMA, IA, Fotos, Registro).
+- **Coach Pro:** $12.99/mes (Dashboard, Alertas, Auditoría IA, Fotos).
+- **Coach Anual:** $8.32/mes (Ahorra $55/año).

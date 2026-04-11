@@ -1,0 +1,43 @@
+/* App-specific styles */
+.App {
+  min-height: 100vh;
+  background-color: #000000;
+}
+
+/* Ensure proper stacking */
+.App > * {
+  position: relative;
+}
+
+/* Chart tooltip fix */
+.recharts-tooltip-wrapper {
+  z-index: 1000 !important;
+}
+
+/* Tabs active indicator */
+[data-state="active"] {
+  position: relative;
+}
+
+/* Smooth page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 300ms ease, transform 300ms ease;
+}

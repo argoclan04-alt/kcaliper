@@ -16,7 +16,7 @@ export function AboutUs({ onBack }: { onBack: () => void }) {
         <div className="space-y-10 text-white/70 text-sm leading-relaxed">
           <section>
             <h2 className="text-2xl font-extrabold text-white mb-4">Precisión en cada gramo. <span className="text-fp-gradient">Inteligencia en cada decisión.</span></h2>
-            <p className="text-base text-white/60 leading-relaxed">kCaliper.ai nació de una frustración real: la desconexión entre lo que la báscula dice y lo que realmente está pasando con tu cuerpo. Fundada por coaches y profesionales del fitness que entendían el problema de primera mano, creamos la plataforma que nosotros mismos queríamos usar.</p>
+            <p className="text-base text-white/60 leading-relaxed">kcaliper.com nació de una frustración real: la desconexión entre lo que la báscula dice y lo que realmente está pasando con tu cuerpo. Fundada por coaches y profesionales del fitness que entendían el problema de primera mano, creamos la plataforma que nosotros mismos queríamos usar.</p>
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-4">Nuestra Misión</h2>
@@ -41,12 +41,12 @@ export function AboutUs({ onBack }: { onBack: () => void }) {
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-4">¿Por qué "kCaliper"?</h2>
-            <p>Un caliper (calibrador) es el instrumento de precisión por excelencia para medir composición corporal. La "k" representa la constante de precisión en nuestros algoritmos. Juntos, kCaliper.ai simboliza la medición precisa potenciada por inteligencia artificial.</p>
+            <p>Un caliper (calibrador) es el instrumento de precisión por excelencia para medir composición corporal. La "k" representa la constante de precisión en nuestros algoritmos. Juntos, kcaliper.com simboliza la medición precisa potenciada por inteligencia artificial.</p>
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-4">Contacto</h2>
-            <p>¿Preguntas, sugerencias o simplemente quieres decir hola? Escríbenos a <a href="mailto:hola@kcaliper.ai" className="text-[#6C5CE7] hover:underline">hola@kcaliper.ai</a></p>
-            <p className="mt-2">Síguenos en <a href="https://instagram.com/kcaliper.ai" target="_blank" rel="noopener" className="text-[#6C5CE7] hover:underline">@kcaliper.ai</a></p>
+            <p>¿Preguntas, sugerencias o simplemente quieres decir hola? Escríbenos a <a href="mailto:hola@kcaliper.com" className="text-[#6C5CE7] hover:underline">hola@kcaliper.com</a></p>
+            <p className="mt-2">Síguenos en <a href="https://instagram.com/kcaliper.com" target="_blank" rel="noopener" className="text-[#6C5CE7] hover:underline">@kcaliper.com</a></p>
           </section>
         </div>
       </div>

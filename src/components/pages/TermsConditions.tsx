@@ -15,11 +15,11 @@ export function TermsConditions({ onBack }: { onBack: () => void }) {
         <div className="space-y-8 text-white/70 text-sm leading-relaxed">
           <section>
             <h2 className="text-lg font-bold text-white mb-3">1. Aceptación de los Términos</h2>
-            <p>Al acceder y utilizar kCaliper.ai ("el Servicio"), aceptas estos Términos y Condiciones en su totalidad. Si no estás de acuerdo con alguna parte de estos términos, no debes utilizar el Servicio.</p>
+            <p>Al acceder y utilizar kcaliper.com ("el Servicio"), aceptas estos Términos y Condiciones en su totalidad. Si no estás de acuerdo con alguna parte de estos términos, no debes utilizar el Servicio.</p>
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-3">2. Descripción del Servicio</h2>
-            <p>kCaliper.ai es una plataforma de seguimiento de peso corporal y composición corporal que utiliza inteligencia artificial (CaliBot) para análisis de tendencias, alertas inteligentes y seguimiento automatizado. El servicio está disponible como aplicación web y a través de integraciones de mensajería.</p>
+            <p>kcaliper.com es una plataforma de seguimiento de peso corporal y composición corporal que utiliza inteligencia artificial (CaliBot) para análisis de tendencias, alertas inteligentes y seguimiento automatizado. El servicio está disponible como aplicación web y a través de integraciones de mensajería.</p>
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-3">3. Cuentas de Usuario</h2>
@@ -45,15 +45,15 @@ export function TermsConditions({ onBack }: { onBack: () => void }) {
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-3">6. Propiedad Intelectual</h2>
-            <p>Todo el contenido, diseño, código, algoritmos (incluyendo DEMA y CaliBot), logotipos y marcas de kCaliper.ai son propiedad exclusiva de kCaliper.ai. No se autoriza su reproducción, distribución o uso sin consentimiento previo por escrito.</p>
+            <p>Todo el contenido, diseño, código, algoritmos (incluyendo DEMA y CaliBot), logotipos y marcas de kcaliper.com son propiedad exclusiva de kcaliper.com. No se autoriza su reproducción, distribución o uso sin consentimiento previo por escrito.</p>
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-3">7. Limitación de Responsabilidad</h2>
-            <p>kCaliper.ai es una herramienta de seguimiento y análisis. <strong className="text-white/80">NO es un sustituto de consejo médico profesional.</strong> No nos hacemos responsables de decisiones de salud tomadas basándose en los datos o análisis proporcionados por nuestro servicio. Consulta siempre con un profesional de salud cualificado.</p>
+            <p>kcaliper.com es una herramienta de seguimiento y análisis. <strong className="text-white/80">NO es un sustituto de consejo médico profesional.</strong> No nos hacemos responsables de decisiones de salud tomadas basándose en los datos o análisis proporcionados por nuestro servicio. Consulta siempre con un profesional de salud cualificado.</p>
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-3">8. Relación Coach-Cliente</h2>
-            <p>kCaliper.ai facilita la conexión entre coaches y clientes, pero no es responsable de la relación profesional entre ambos. Los coaches son responsables de la calidad de su asesoramiento.</p>
+            <p>kcaliper.com facilita la conexión entre coaches y clientes, pero no es responsable de la relación profesional entre ambos. Los coaches son responsables de la calidad de su asesoramiento.</p>
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-3">9. Cancelación</h2>
@@ -74,7 +74,7 @@ export function TermsConditions({ onBack }: { onBack: () => void }) {
           </section>
           <section>
             <h2 className="text-lg font-bold text-white mb-3">12. Contacto</h2>
-            <p>Para consultas sobre estos términos: <a href="mailto:legal@kcaliper.ai" className="text-[#6C5CE7] hover:underline">legal@kcaliper.ai</a></p>
+            <p>Para consultas sobre estos términos: <a href="mailto:legal@kcaliper.com" className="text-[#6C5CE7] hover:underline">legal@kcaliper.com</a></p>
           </section>
         </div>
       </div>

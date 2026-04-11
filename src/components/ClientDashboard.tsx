@@ -9,6 +9,8 @@ import { Badge } from './ui/badge';
 import { calculateDoubleExponentialMovingAverage, calculateWeeklyRate } from '../utils/weight-calculations';
 import { Scale, TrendingDown, TrendingUp, Target, Award, ArrowRight } from 'lucide-react';
 import { showAchievementToast } from './AchievementToast';
+import { Lock, Zap, CheckCircle2, CircleDashed } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface ClientDashboardProps {
   client: Client;
@@ -32,6 +34,10 @@ export function ClientDashboard({ client, onAddWeight, onUpdateEntry, loading, u
   const highestWeight = client.weightEntries.reduce((max, entry) => 
     entry.weight > max ? entry.weight : max, -Infinity
   );
+
+  const entriesCount = client.weightEntries.length;
+  const hasEnoughDataForDEMA = entriesCount >= 3;
+  const hasPhoto = client.physiquePhotos && client.physiquePhotos.length > 0;
 
   // Check for achievements when latest entry changes
   useEffect(() => {
@@ -87,9 +93,39 @@ export function ClientDashboard({ client, onAddWeight, onUpdateEntry, loading, u
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h1 className="text-2xl font-semibold mb-2">Weight Tracker</h1>
-        <p className="text-gray-600">Track your progress and stay consistent</p>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-2">Panel del Atleta</h1>
+        <p className="text-gray-400">Observa cómo la inteligencia artificial te ayuda a transformar tu cuerpo.</p>
       </div>
+
+      {/* Gamified Actionable Checklist */}
+      {(entriesCount < 7 || !hasPhoto) && (
+        <Card className="bg-[#111111] border-white/10 relative overflow-hidden">
+           <div className="absolute top-0 right-0 p-8 opacity-10">
+               <Zap className="w-24 h-24 text-[var(--fp-cyan)]" />
+           </div>
+           <CardContent className="p-6 relative z-10 flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-1">
+                 <h3 className="text-xl font-bold text-white mb-1">Misiones de Arranque</h3>
+                 <p className="text-gray-400 text-sm mb-4">Completa estos pasos para que CaliBot conozca tu biología al 100%.</p>
+                 
+                 <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                       <CheckCircle2 className="w-5 h-5 text-green-500" />
+                       <span className="text-gray-300 font-medium line-through">Onboarding Completado</span>
+                    </div>
+                    <div className="flex items-center gap-3 group">
+                       {hasPhoto ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <CircleDashed className="w-5 h-5 text-[var(--fp-cyan)] group-hover:scale-110 transition-transform" />}
+                       <span className={`font-medium ${hasPhoto ? 'text-gray-300 line-through' : 'text-white'}`}>Subir primera Foto de Progreso</span>
+                    </div>
+                    <div className="flex items-center gap-3 group">
+                       {hasEnoughDataForDEMA ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <CircleDashed className="w-5 h-5 text-[var(--fp-violet)] animate-pulse" />}
+                       <span className={`font-medium ${hasEnoughDataForDEMA ? 'text-gray-300 line-through' : 'text-white'}`}>Ingresar 3 registros de peso ({entriesCount}/3)</span>
+                    </div>
+                 </div>
+              </div>
+           </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -107,8 +143,14 @@ export function ClientDashboard({ client, onAddWeight, onUpdateEntry, loading, u
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-4">
+        <Card className="relative overflow-hidden group">
+          {!hasEnoughDataForDEMA && (
+             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-2 text-center group-hover:bg-black/50 transition-colors">
+               <Lock className="w-6 h-6 text-gray-400 mb-1" />
+               <span className="text-xs text-gray-300 font-medium">Requiere 3 pesajes</span>
+             </div>
+          )}
+          <CardContent className={`p-4 ${!hasEnoughDataForDEMA ? 'opacity-30 blur-sm' : ''}`}>
             <div className="flex items-center gap-3">
               <Target className="w-8 h-8 text-purple-600" />
               <div>
@@ -165,12 +207,19 @@ export function ClientDashboard({ client, onAddWeight, onUpdateEntry, loading, u
         </Card>
       </div>
 
-      {/* Current Progress */}
-      <Card>
-        <CardHeader>
+      {/* Current Progress - LOCKED IF NOT ENOUGH DATA */}
+      <Card className="relative overflow-hidden group">
+        {!hasEnoughDataForDEMA && (
+             <div className="absolute inset-0 bg-black/60 backdrop-blur-md z-10 flex flex-col items-center justify-center p-2 text-center">
+               <Lock className="w-8 h-8 text-gray-400 mb-2" />
+               <span className="text-sm text-gray-300 font-bold max-w-xs">Velocidad Semanal Bloqueada</span>
+               <span className="text-xs text-gray-400 mt-1 max-w-xs">Registra 2 pesos más para activar el sensor predictivo de quema calórica.</span>
+             </div>
+        )}
+        <CardHeader className={`${!hasEnoughDataForDEMA ? 'opacity-30 blur-sm' : ''}`}>
           <CardTitle>Current Progress</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className={`space-y-4 ${!hasEnoughDataForDEMA ? 'opacity-30 blur-sm' : ''}`}>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Target Rate:</span>

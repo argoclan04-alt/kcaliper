@@ -6,6 +6,7 @@ import { AlertsPanel } from './AlertsPanel';
 import { MobileNotificationsButton } from './MobileNotificationsButton';
 import { PhotoRequestDialog } from './PhotoRequestDialog';
 import { NutritionDialog } from './NutritionDialog';
+import { TrainingModulesModal } from './TrainingModulesModal';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -15,8 +16,24 @@ import { Switch } from './ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { calculateDoubleExponentialMovingAverage, calculateWeeklyRate } from '../utils/weight-calculations';
-import { Users, Scale, Settings, ChevronDown, ChevronUp, BookOpen, PlayCircle, Info, Camera, MoreVertical } from 'lucide-react';
+import { Users, Scale, Settings, ChevronDown, ChevronUp, BookOpen, PlayCircle, Info, Camera, MoreVertical, HelpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+
+// ─── Cyclic color palette for client differentiation (10 colors) ───
+const CLIENT_COLOR_PALETTE = [
+  { border: '#6366f1', label: 'Indigo' },   // 0
+  { border: '#ec4899', label: 'Pink' },     // 1
+  { border: '#14b8a6', label: 'Teal' },     // 2
+  { border: '#f59e0b', label: 'Amber' },    // 3
+  { border: '#8b5cf6', label: 'Violet' },   // 4
+  { border: '#06b6d4', label: 'Cyan' },     // 5
+  { border: '#f97316', label: 'Orange' },   // 6
+  { border: '#22c55e', label: 'Green' },    // 7
+  { border: '#ef4444', label: 'Red' },      // 8
+  { border: '#3b82f6', label: 'Blue' },     // 9
+];
+
+const getClientColor = (index: number) => CLIENT_COLOR_PALETTE[index % CLIENT_COLOR_PALETTE.length];
 import { toast, Toaster } from 'sonner';
 
 interface CoachDashboardProps {
@@ -49,6 +66,7 @@ export function CoachDashboard({
   const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
   const [photoRequestDialogOpen, setPhotoRequestDialogOpen] = useState(false);
   const [showChart, setShowChart] = useState(false);
+  const [trainingModulesOpen, setTrainingModulesOpen] = useState(false);
 
   // Sync selectedClient with the latest data from the coach prop
   // This ensures that when we update settings or add weights, the modal UI updates immediately
@@ -199,7 +217,7 @@ export function CoachDashboard({
     <div className="space-y-6 sm:space-y-6">
       {/* Desktop Header - Hidden on mobile */}
       <div className="hidden sm:flex justify-end items-center">
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button variant="outline" size="sm" className="gap-2" onClick={() => setTrainingModulesOpen(true)}>
           <PlayCircle className="w-4 h-4" />
           Módulos de Entrenamiento
         </Button>
@@ -215,7 +233,7 @@ export function CoachDashboard({
             </CardHeader>
             <CardContent className="p-0 sm:p-6">
               <div className="grid gap-0 sm:gap-2">
-                {coach.clients.map((client) => {
+                {coach.clients.map((client, clientIndex) => {
                   const stats = getClientStats(client);
                   
                   // Check if there are unread alerts for this client
@@ -226,6 +244,7 @@ export function CoachDashboard({
                     <div
                       key={client.id}
                       className="p-4 mb-3 border-0 bg-white/60 dark:bg-gray-800/60 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-md dark:border-gray-700 transition-all cursor-pointer relative overflow-hidden group"
+                      style={{ borderLeft: `4px solid ${getClientColor(clientIndex).border}` }}
                       onClick={() => {
                         setSelectedClient(client);
                         setShowChart(true);
@@ -676,6 +695,13 @@ export function CoachDashboard({
           }}
         />
       )}
+
+      {/* Training Modules Modal */}
+      <TrainingModulesModal
+        open={trainingModulesOpen}
+        onOpenChange={setTrainingModulesOpen}
+        role="coach"
+      />
     </div>
   );
 }

@@ -15,8 +15,10 @@ import { CaliBotResponse } from './components/CaliBotResponse';
 
 import { LandingPage } from './components/LandingPage';
 import { CoachLandingPage } from './components/CoachLandingPage';
+import { ElegantLandingPage } from './components/ElegantLandingPage';
 import { EarlyAccessPage } from './components/EarlyAccessPage';
 import { LoginPage } from './components/LoginPage';
+import AppV2 from './v2/App';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
@@ -24,6 +26,9 @@ import { PrivacyPolicy } from './components/pages/PrivacyPolicy';
 import { TermsConditions } from './components/pages/TermsConditions';
 import { AcceptableUse } from './components/pages/AcceptableUse';
 import { AboutUs } from './components/pages/AboutUs';
+import { AdminApp } from './components/admin/AdminApp';
+import { BecomeInfluencerPage } from './components/BecomeInfluencerPage';
+import { OnboardingWizard } from './components/pages/OnboardingWizard';
 
 
 /* ============ URL ROUTER HOOK ============ */
@@ -78,8 +83,50 @@ export default function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
+      
+      // BRIDGE: If Supabase logs in via Magic Link, we must grant them access 
+      // to the frontend dashboard which currently uses localStorage.
+      if (session?.user && (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION')) {
+        const email = session.user.email;
+        // Fetch their assigned role/plan from the real Supabase backend
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+        
+        const role = profile?.role || 'athlete';
+        const plan = profile?.plan || 'pro';
+        
+        // Inject auth into LocalStorage so the useWeightTracker engine lets them in
+        localStorage.setItem('kcaliper_auth', JSON.stringify({
+           email: email,
+           role: role,
+           plan: plan,
+           timestamp: new Date().toISOString()
+        }));
+        
+        // Enforce proper navigation logic, checking REAL data instead of just localStorage
+        let hasOnboarded = localStorage.getItem('kcaliper_onboarding_done') === 'true';
+        
+        // Double check Supabase to ensure robust cross-device support for Athletes
+        if (!hasOnboarded && role === 'client') {
+            const { data: entries } = await supabase.from('weight_entries').select('id').eq('client_id', session.user.id).limit(1);
+            if (entries && entries.length > 0) {
+               hasOnboarded = true;
+               localStorage.setItem('kcaliper_onboarding_done', 'true');
+            }
+        }
+        // Coaches don't strictly need onboarding yet, bypass it
+        if (role === 'coach') hasOnboarded = true;
+        
+        const path = window.location.pathname;
+        
+        // Only redirect if they are stuck on login, or entering the wrong mode
+        if (!hasOnboarded && path !== '/onboarding') {
+            navigate('/onboarding');
+        } else if (hasOnboarded && (path === '/login' || path === '/onboarding' || path === '/')) {
+            navigate('/dashboard');
+        }
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -138,17 +185,33 @@ export default function App() {
   };
 
   // ===== ROUTING =====
+
+  // Admin Panel (must be BEFORE all other routes)
+  if (path.startsWith('/admin')) {
+    return <AdminApp path={path} />;
+  }
   
   // Legal pages
   const goBack = () => { navigate('/'); };
   if (path === '/privacidad') return <PrivacyPolicy onBack={goBack} />;
   if (path === '/terminos') return <TermsConditions onBack={goBack} />;
   if (path === '/uso-aceptable') return <AcceptableUse onBack={goBack} />;
-  if (path === '/nosotros') return <AboutUs onBack={goBack} />;
+  // if (path === '/nosotros') return <AboutUs onBack={goBack} />; // Handled by v2 now
+
+  // Influencer join page
+  if (path === '/become-influencer') {
+    return <BecomeInfluencerPage onNavigate={handleNavigate} />;
+  }
+
 
   // Coach landing
   if (path === '/coach') {
     return <CoachLandingPage onNavigate={handleNavigate} />;
+  }
+
+  // Elegant Landing page
+  if (path === '/landing-elegant') {
+    return <ElegantLandingPage onNavigate={handleNavigate} />;
   }
 
   // Early access (post-signup)
@@ -159,6 +222,11 @@ export default function App() {
   // Login Page
   if (path === '/login') {
     return <LoginPage onNavigate={handleNavigate} />;
+  }
+
+  // Onboarding VIP Flow
+  if (path === '/onboarding') {
+    return <OnboardingWizard onBack={() => handleNavigate('/')} onComplete={() => handleNavigate('/dashboard')} />;
   }
 
   // Dashboard (authenticated app)
@@ -277,6 +345,6 @@ export default function App() {
     );
   }
 
-  // Default: Main landing page (athletes)
-  return <LandingPage onNavigate={handleNavigate} />;
+  // Default: Main landing page (athletes) - v2 is now default
+  return <AppV2 />;
 }
