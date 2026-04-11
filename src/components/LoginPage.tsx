@@ -129,8 +129,8 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                 </div>
 
                 <form onSubmit={handleEmailSubmit} className="space-y-4">
-                  <div className="relative group">
-                    <input
+                   <div className="relative group">
+                     <input
                       type="email"
                       placeholder="email@kcaliper.com"
                       value={email}
@@ -145,6 +145,23 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                       →
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!email) {
+                        toast.error("Ingresa tu email primero.");
+                        return;
+                      }
+                      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: `${window.location.origin}/reset-password`,
+                      });
+                      if (error) toast.error(error.message);
+                      else toast.success("Correo de recuperación enviado.");
+                    }}
+                    className="text-xs text-white/30 hover:text-white/60 transition-colors uppercase tracking-widest"
+                  >
+                    Olvidé mi contraseña
+                  </button>
                 </form>
 
                 <p className="text-[10px] text-white/20 uppercase tracking-[0.2em]">

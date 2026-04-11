@@ -29,6 +29,7 @@ import { AboutUs } from './components/pages/AboutUs';
 import { AdminApp } from './components/admin/AdminApp';
 import { BecomeInfluencerPage } from './components/BecomeInfluencerPage';
 import { OnboardingWizard } from './components/pages/OnboardingWizard';
+import { ResetPasswordPage } from './components/ResetPasswordPage';
 
 
 /* ============ URL ROUTER HOOK ============ */
@@ -88,7 +89,7 @@ export default function App() {
       
       // BRIDGE: If Supabase logs in via Magic Link, we must grant them access 
       // to the frontend dashboard which currently uses localStorage.
-      if (session?.user && (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION')) {
+      if (session?.user && (_event === 'SIGNED_IN' || _event === 'INITIAL_SESSION' || _event === 'PASSWORD_RECOVERY')) {
         const email = session.user.email;
         // Fetch their assigned role/plan from the real Supabase backend
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
@@ -120,8 +121,14 @@ export default function App() {
         
         const path = window.location.pathname;
         
+        // HANDLE PASSWORD RECOVERY: Redirect to reset page and STOP other redirects
+        if (_event === 'PASSWORD_RECOVERY') {
+            navigate('/reset-password');
+            return;
+        }
+
         // Only redirect if they are stuck on login, or entering the wrong mode
-        if (!hasOnboarded && path !== '/onboarding') {
+        if (!hasOnboarded && path !== '/onboarding' && path !== '/reset-password') {
             navigate('/onboarding');
         } else if (hasOnboarded && (path === '/login' || path === '/onboarding' || path === '/')) {
             navigate('/dashboard');
@@ -222,6 +229,10 @@ export default function App() {
   // Login Page
   if (path === '/login') {
     return <LoginPage onNavigate={handleNavigate} />;
+  }
+
+  if (path === '/reset-password') {
+    return <ResetPasswordPage />;
   }
 
   // Onboarding VIP Flow
