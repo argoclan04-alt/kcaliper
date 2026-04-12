@@ -110,7 +110,7 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
       </div>
 
       {/* Navigation */}
-      <MiniNavbar />
+      <MiniNavbar onNavigate={onNavigate} />
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-6">

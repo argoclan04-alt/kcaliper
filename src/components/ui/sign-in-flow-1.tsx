@@ -334,7 +334,7 @@ const AnimatedNavLink = ({ href, children }: { href: string; children: React.Rea
   );
 };
 
-export function MiniNavbar() {
+export function MiniNavbar({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [headerShapeClass, setHeaderShapeClass] = useState('rounded-full');
   const shapeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -354,9 +354,9 @@ export function MiniNavbar() {
   }, [isOpen]);
 
   const navLinksData = [
-    { label: 'Manifesto', href: '#' },
-    { label: 'Careers', href: '#' },
-    { label: 'Discover', href: '#' },
+    { label: 'Manifesto', href: '/manifesto' },
+    { label: 'Careers', href: '/careers' },
+    { label: 'Discover', href: '/discover' },
   ];
 
   return (
@@ -368,20 +368,37 @@ export function MiniNavbar() {
                        w-[calc(100%-2rem)] sm:w-auto
                        transition-[border-radius] duration-0 ease-in-out`}>
       <div className="flex items-center justify-between w-full gap-x-6 sm:gap-x-8">
-        <div className="flex items-center gap-2">
+        <div 
+          className="flex items-center gap-2 cursor-pointer" 
+          onClick={() => onNavigate ? onNavigate('/') : window.location.href = '/'}
+        >
             <span className="w-1.5 h-1.5 rounded-full bg-gray-200 opacity-80" />
             <span className="text-xs font-bold text-white tracking-widest uppercase">kCaliper</span>
         </div>
         <nav className="hidden sm:flex items-center space-x-4 sm:space-x-6 text-sm">
           {navLinksData.map((link) => (
-            <AnimatedNavLink key={link.label} href={link.href}>
+            <button 
+              key={link.label} 
+              onClick={() => onNavigate ? onNavigate(link.href) : window.location.href = link.href}
+              className="text-gray-300 hover:text-white text-sm transition-colors"
+            >
               {link.label}
-            </AnimatedNavLink>
+            </button>
           ))}
         </nav>
         <div className="hidden sm:flex items-center gap-2 sm:gap-3">
-          <button className="px-4 py-2 text-xs border border-[#333] bg-[rgba(31,31,31,0.62)] text-gray-300 rounded-full hover:border-white/50 hover:text-white transition-colors">LogIn</button>
-          <button className="px-4 py-2 text-xs font-semibold text-black bg-white rounded-full hover:bg-gray-200 transition-colors">Signup</button>
+          <button 
+            onClick={() => onNavigate ? onNavigate('/login') : window.location.href = '/login'}
+            className="px-4 py-2 text-xs border border-[#333] bg-[rgba(31,31,31,0.62)] text-gray-300 rounded-full hover:border-white/50 hover:text-white transition-colors"
+          >
+            LogIn
+          </button>
+          <button 
+            onClick={() => onNavigate ? onNavigate('/signup') : window.location.href = '/signup'}
+            className="px-4 py-2 text-xs font-semibold text-black bg-white rounded-full hover:bg-gray-200 transition-colors"
+          >
+            Signup
+          </button>
         </div>
         <button className="sm:hidden text-gray-300" onClick={() => setIsOpen(!isOpen)}>
           {isOpen ? "✕" : "☰"}
