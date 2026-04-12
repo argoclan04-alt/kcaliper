@@ -7,6 +7,7 @@ import { MobileNotificationsButton } from './MobileNotificationsButton';
 import { PhotoRequestDialog } from './PhotoRequestDialog';
 import { NutritionDialog } from './NutritionDialog';
 import { TrainingModulesModal } from './TrainingModulesModal';
+import { InviteClientDialog } from './InviteClientDialog';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -216,8 +217,9 @@ export function CoachDashboard({
   return (
     <div className="space-y-6 sm:space-y-6">
       {/* Desktop Header - Hidden on mobile */}
-      <div className="hidden sm:flex justify-end items-center">
-        <Button variant="outline" size="sm" className="gap-2" onClick={() => setTrainingModulesOpen(true)}>
+      <div className="hidden sm:flex justify-end items-center gap-3">
+        <InviteClientDialog coachId={coach.id} coachName={coach.name} />
+        <Button variant="outline" size="sm" className="gap-2 h-12 px-6 rounded-full border-white/10 bg-white/5 hover:bg-white/10" onClick={() => setTrainingModulesOpen(true)}>
           <PlayCircle className="w-4 h-4" />
           Módulos de Entrenamiento
         </Button>

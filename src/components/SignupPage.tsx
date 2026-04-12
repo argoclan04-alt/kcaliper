@@ -22,6 +22,22 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
   
   const [initialCanvasVisible, setInitialCanvasVisible] = useState(true);
   const [reverseCanvasVisible, setReverseCanvasVisible] = useState(false);
+  const [prefilledCoachId, setPrefilledCoachId] = useState<string | null>(null);
+
+  // Capture coach_id from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cid = params.get('coach_id');
+    if (cid) {
+      console.log("Coach Invitation Detected:", cid);
+      setPrefilledCoachId(cid);
+      // Auto-set role if it's an athlete invite
+      if (params.get('role') === 'athlete') {
+        setRole('athlete');
+        setStep('email');
+      }
+    }
+  }, []);
 
   // Stripe Links
   const STRIPE_ATHLETE = "https://buy.stripe.com/test_5kQdR95rtgQLeDd7qO04805";
@@ -64,6 +80,7 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
           data: {
             role: role === 'coach' ? 'coach' : 'client',
             full_name: email.split('@')[0],
+            coach_id: prefilledCoachId // Automatically links athlete to coach
           }
         }
       });
