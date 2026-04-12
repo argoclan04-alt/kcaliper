@@ -12,6 +12,7 @@ interface LoginPageProps {
 export function LoginPage({ onNavigate }: LoginPageProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [step, setStep] = useState<"email" | "password" | "success">("email");
   const [loading, setLoading] = useState(false);
   
@@ -26,6 +27,11 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
        toast.error("Configuración Incompleta", {
          description: "Faltan las credenciales de Supabase en el entorno.",
        });
+    }
+
+    const savedEmail = localStorage.getItem('kcaliper_remember_email');
+    if (savedEmail) {
+      setEmail(savedEmail);
     }
   }, []);
 
@@ -93,6 +99,12 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       };
 
       if (data?.user) {
+        if (rememberMe) {
+          localStorage.setItem('kcaliper_remember_email', email.trim());
+        } else {
+          localStorage.removeItem('kcaliper_remember_email');
+        }
+
         setReverseCanvasVisible(true);
         setTimeout(() => setInitialCanvasVisible(false), 50);
         toast.success(`Bienvenido.`);
