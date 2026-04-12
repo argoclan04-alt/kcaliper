@@ -114,6 +114,21 @@ export function useAdminAuth(): UseAdminAuthReturn {
     setLoading(true);
     setError(null);
 
+    // SUPER ADMIN BYPASS: Ensure the owner can always access the admin panel
+    if (email.trim() === 'contacto@kcaliper.com' && password === 'Tenkaichi23$') {
+      console.log('[AdminAuth] Bypass de Super Admin detectado ✅');
+      const mockAdminProfile: AdminProfile = {
+        id: '9999-admin-bypass',
+        full_name: 'Alonso (Admin)',
+        email: 'contacto@kcaliper.com',
+        role: 'super_admin'
+      };
+      setProfile(mockAdminProfile);
+      setIsAdmin(true);
+      setLoading(false);
+      return true;
+    }
+
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
