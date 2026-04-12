@@ -11,9 +11,12 @@ import { RevenueDashboard } from './modules/RevenueDashboard';
 import { AuditLog } from './modules/AuditLog';
 import { SystemConfig } from './modules/SystemConfig';
 
+import { WaitlistManager } from './modules/WaitlistManager';
+
 const ADMIN_ROUTES: Record<string, string> = {
   '/admin': 'overview',
   '/admin/accounts': 'accounts',
+  '/admin/waitlist': 'waitlist',
   '/admin/tickets': 'tickets',
   '/admin/marketing': 'marketing',
   '/admin/influencers': 'influencers',
@@ -46,6 +49,7 @@ export function AdminApp({ path }: { path: string }) {
     switch (activeModule) {
       case 'overview': return <OverviewDashboard />;
       case 'accounts': return <AccountsManager />;
+      case 'waitlist': return <WaitlistManager />;
       case 'tickets': return <TicketsManager />;
       case 'marketing': return <MarketingDashboard />;
       case 'influencers': return <InfluencerTracker />;

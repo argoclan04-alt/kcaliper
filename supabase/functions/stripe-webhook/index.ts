@@ -108,6 +108,20 @@ Deno.serve(async (req) => {
         console.log(`Saved decoupled purchase for future user ${customerEmail}`);
       }
 
+      // --- NEW: CLEANUP WAITLIST ---
+      try {
+        const { error: waitlistError } = await supabaseAdmin
+          .from('waitlist')
+          .delete()
+          .eq('email', customerEmail);
+        
+        if (!waitlistError) {
+          console.log(`Removed ${customerEmail} from waitlist because they converted.`);
+        }
+      } catch (e) {
+        console.error("Waitlist cleanup failed:", e);
+      }
+
       // -------------------------------------------------------------
       // GENERATE MAGIC LINK (ZERO FRICTION)
       // -------------------------------------------------------------

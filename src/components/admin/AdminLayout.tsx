@@ -23,17 +23,19 @@ interface AdminLayoutProps {
 const NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/admin' },
   { id: 'accounts', label: 'Cuentas', icon: Users, path: '/admin/accounts' },
+  { id: 'waitlist', label: 'Waitlist', icon: FileText, path: '/admin/waitlist' },
   { id: 'tickets', label: 'Soporte', icon: TicketCheck, path: '/admin/tickets' },
   { id: 'marketing', label: 'Marketing', icon: Megaphone, path: '/admin/marketing' },
   { id: 'influencers', label: 'Influencers', icon: Handshake, path: '/admin/influencers' },
   { id: 'revenue', label: 'Revenue', icon: DollarSign, path: '/admin/revenue' },
-  { id: 'audit', label: 'Auditoría', icon: FileText, path: '/admin/audit' },
+  { id: 'audit', label: 'Auditoría', icon: Shield, path: '/admin/audit' },
   { id: 'system', label: 'Sistema', icon: Wrench, path: '/admin/system' },
 ];
 
 const MODULE_LABELS: Record<string, string> = {
   overview: 'Overview',
   accounts: 'Gestión de Cuentas',
+  waitlist: 'Lista de Espera (Waitlist)',
   tickets: 'Soporte',
   marketing: 'Marketing',
   influencers: 'Influencers',
