@@ -200,9 +200,9 @@ export default function App() {
     return <EarlyAccessPage onNavigate={handleNavigate} />;
   }
 
-  // Unified Auth Page
+  // RESTORED OLD LOGIN UI
   if (path === '/login' || path === '/auth') {
-    return <AuthPage initialMode="login" />;
+    return <LoginPage onNavigate={handleNavigate} />;
   }
 
   if (path === '/signup') {

@@ -7,7 +7,7 @@ const Footer = () => {
 
   const socialLinks = [
     { icon: Twitter, href: '#', label: 'Twitter' },
-    { icon: Instagram, href: 'https://instagram.com/kcaliper.com', label: 'Instagram' },
+    { icon: Instagram, href: 'https://instagram.com/kcaliperai', label: 'Instagram' },
     { icon: Linkedin, href: '#', label: 'LinkedIn' },
     { icon: Youtube, href: '#', label: 'YouTube' },
   ];

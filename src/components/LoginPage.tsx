@@ -3,24 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { CanvasRevealEffect, MiniNavbar } from "./ui/sign-in-flow-1";
 import { cn } from "./ui/utils";
+import { supabase } from "../lib/supabase";
 
 interface LoginPageProps {
   onNavigate: (page: string) => void;
 }
 
-// Credential registry — each entry maps to a different mock data profile
-const ACCOUNTS: Record<string, { password: string; accountId: string; displayName: string }> = {
-  'argo@kcaliper.com': {
-    password: 'kcaliperadmin',
-    accountId: 'argo',
-    displayName: 'Admin (Argo)'
-  },
-  'esteban@kcaliper.com': {
-    password: 'esteban2026',
-    accountId: 'esteban',
-    displayName: 'Coach Esteban Alban'
-  }
-};
+
 
 export function LoginPage({ onNavigate }: LoginPageProps) {
   const [email, setEmail] = useState("");
@@ -33,37 +22,41 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
 
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const account = ACCOUNTS[email.toLowerCase().trim()];
-    if (account) {
-      setStep("password");
-    } else {
-      toast.error("Este email no tiene acceso autorizado.");
+    if (!email || !email.includes('@')) {
+      toast.error("Por favor ingresa un email válido.");
+      return;
     }
+    setStep("password");
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const account = ACCOUNTS[email.toLowerCase().trim()];
-    if (account && password === account.password) {
-      // Trigger canvas transition
-      setReverseCanvasVisible(true);
-      setTimeout(() => setInitialCanvasVisible(false), 50);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: password,
+      });
 
-      // Authenticate
-      localStorage.setItem('kcaliper_auth', 'true');
-      localStorage.setItem('kcaliper_account', account.accountId);
-      
-      toast.success(`Bienvenido, ${account.displayName}.`);
-      
-      setStep("success");
-      
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 2000);
-    } else {
-      toast.error('Contraseña incorrecta.');
+      if (error) throw error;
+
+      if (data?.user) {
+        // Trigger canvas transition
+        setReverseCanvasVisible(true);
+        setTimeout(() => setInitialCanvasVisible(false), 50);
+
+        toast.success(`Bienvenido de nuevo.`);
+        
+        setStep("success");
+        
+        setTimeout(() => {
+          // Success redirect handled by Auth state change in App.tsx or manually here
+          window.location.href = '/dashboard';
+        }, 1500);
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Error al iniciar sesión.');
       setLoading(false);
     }
   };
