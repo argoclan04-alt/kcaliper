@@ -18,18 +18,13 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
   const [initialCanvasVisible, setInitialCanvasVisible] = useState(true);
   const [reverseCanvasVisible, setReverseCanvasVisible] = useState(false);
 
-  // Check for missing credentials on mount
   useEffect(() => {
+    // Basic verification of environment variables
     const url = import.meta.env.VITE_SUPABASE_URL;
     const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
     if (!url || !key || key.includes('mock')) {
-       toast.error("Error de Configuración Detectado", {
-         description: "Faltan las variables de entorno en el Dashboard de Vercel (VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY).",
-         duration: 10000,
-         action: {
-           label: "Más info",
-           onClick: () => window.open('https://vercel.com/docs/projects/environment-variables', '_blank')
-         }
+       toast.error("Configuración Incompleta", {
+         description: "Faltan las credenciales de Supabase en el entorno.",
        });
     }
   }, []);
@@ -37,7 +32,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
   const handleEmailSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
-      toast.error("Por favor ingresa un email válido.");
+      toast.error("Ingresa un email válido.");
       return;
     }
     setStep("password");
@@ -50,20 +45,11 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
     try {
       const emailLower = email.trim().toLowerCase();
       
-      // ADMIN BYPASS (kept for quick access to /admin panel)
+      // ADMIN BYPASS
       if ((emailLower === 'admin@kcaliper.ai' || emailLower === 'contacto@kcaliper.com') && password === 'Tenkaichi23') {
         localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'super_admin', plan: 'pro', timestamp: new Date().toISOString() }));
         setStep("success");
-        setTimeout(() => { window.location.href = '/admin'; }, 1000);
-        return;
-      }
-
-      // Legacy Esteban Bypass (Optional but kept for demo)
-      if (emailLower === 'esteban@kcaliper.ai' && password === 'esteban2026') {
-        localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'coach', plan: 'pro', timestamp: new Date().toISOString() }));
-        localStorage.setItem('kcaliper_account', 'esteban');
-        setStep("success");
-        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
+        setTimeout(() => { window.location.href = '/admin'; }, 800);
         return;
       }
 
@@ -73,28 +59,21 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       });
 
       if (error) {
-         // Specialized error handling for common issues
-         if (error.message.includes('Invalid login credentials')) {
-            throw new Error('Email o contraseña incorrectos. Verifica tus datos.');
-         }
-         throw error;
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Email o contraseña incorrectos.');
+        }
+        throw error;
       };
 
       if (data?.user) {
-        // Trigger canvas transition
         setReverseCanvasVisible(true);
         setTimeout(() => setInitialCanvasVisible(false), 50);
-
-        toast.success(`Acceso concedido. Bienvenido de nuevo.`);
+        toast.success(`Bienvenido.`);
         setStep("success");
-        
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1500);
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
       }
     } catch (error: any) {
-      toast.error(error.message || 'Error al iniciar sesión.');
-      console.error('Login Error details:', error);
+      toast.error(error.message || 'Error al entrar.');
       setLoading(false);
     }
   };
@@ -172,6 +151,8 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                      <Mail className="absolute left-6 top-1/2 -translate-y-1/2 size-5 text-white/20 group-focus-within:text-[#00D2FF] transition-colors" />
                      <input
                       type="email"
+                      name="email"
+                      autoComplete="email"
                       placeholder="email@kcaliper.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -188,23 +169,40 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                     </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!email) {
-                        toast.error("Ingresa tu email primero.");
-                        return;
-                      }
-                      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                        redirectTo: `${window.location.origin}/reset-password`,
-                      });
-                      if (error) toast.error(error.message);
-                      else toast.success("Correo de recuperación enviado.");
-                    }}
-                    className="text-[10px] text-white/20 hover:text-white/60 transition-colors uppercase tracking-[0.2em]"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </button>
+                  <div className="flex items-center justify-between px-2">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="size-4 rounded border border-white/20 bg-white/5 peer-checked:bg-[#00D2FF] peer-checked:border-[#00D2FF] transition-all flex items-center justify-center">
+                          <div className={`size-2 bg-black rounded-sm transition-opacity ${rememberMe ? 'opacity-100' : 'opacity-0'}`} />
+                        </div>
+                      </div>
+                      <span className="text-[10px] text-white/30 group-hover:text-white/60 transition-colors uppercase tracking-widest">Recordarme</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!email) {
+                          toast.error("Ingresa tu email primero.");
+                          return;
+                        }
+                        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                          redirectTo: `${window.location.origin}/reset-password`,
+                        });
+                        if (error) toast.error(error.message);
+                        else toast.success("Correo de recuperación enviado.");
+                      }}
+                      className="text-[10px] text-white/20 hover:text-white/60 transition-colors uppercase tracking-[0.2em]"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </button>
+                  </div>
                 </form>
 
                 <p className="text-[9px] text-white/10 uppercase tracking-[0.5em] pt-4">
@@ -232,6 +230,8 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                 <form onSubmit={handlePasswordSubmit} className="space-y-6">
                   <input
                     type="password"
+                    name="password"
+                    autoComplete="current-password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

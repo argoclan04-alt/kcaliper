@@ -21,199 +21,219 @@ export function useWeightTracker() {
   // Load real data from Supabase on mount
   useEffect(() => {
     async function loadInitialData() {
-      setLoading(true);
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        // Check which account is logged in via our frontend auth
-        const accountId = localStorage.getItem('kcaliper_account') || 'argo';
-        console.log(`Entering Demo Mode (Account: ${accountId})`);
-        await initializeMockMode(accountId);
-        return;
-      }
+      try {
+        setLoading(true);
+        console.log("kCaliper: Inizializando carga de datos...");
+        
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("kCaliper: Error de sesión:", sessionError);
+          setLoading(false);
+          return;
+        }
 
-      await loadUserData(session.user.id);
+        if (!session) {
+          const accountId = localStorage.getItem('kcaliper_account') || 'argo';
+          console.log(`kCaliper: Modo Demo Detectado (Account: ${accountId})`);
+          await initializeMockMode(accountId);
+          return;
+        }
+
+        console.log("kCaliper: Sesión activa encontrada, cargando datos de usuario...");
+        await loadUserData(session.user.id);
+      } catch (err) {
+        console.error("kCaliper: Error crítico en loadInitialData:", err);
+        setLoading(false);
+      }
     }
 
     async function loadUserData(userId: string) {
-      // 1. Fetch Profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-      
-      if (!profile) {
-        setLoading(false);
-        return;
-      }
-      
-      // 1.5 CHECK IF ACCOUNT IS AN INFLUENCER (Only seed if explicitly in influencers table)
-      const { data: influencer } = await supabase
-        .from('influencers')
-        .select('email')
-        .eq('email', profile.email)
-        .maybeSingle();
-
-      const isInfluencer = !!influencer;
-
-      if (isInfluencer) {
-        console.log("Influencer Account Detected! Seeding Mock Data...");
-        await initializeMockMode(userId, true, profile.full_name, profile.email);
-        return;
-      }
-
-      setCurrentUser(profile as User);
-
-      // 2. Separate logic by Role
-      if (profile.role === 'coach') {
-        const coachId = profile.id;
-        const { data: clientsSettings } = await supabase.from('client_settings').select('*').eq('coach_id', coachId);
+      try {
+        // 1. Fetch Profile
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
         
-        let formattedClients: any[] = [];
-        
-        if (clientsSettings && clientsSettings.length > 0) {
-          const clientIds = clientsSettings.map(s => s.id);
-
-          const [
-            { data: clientProfiles },
-            { data: allEntries },
-            { data: allPhotos },
-            { data: allRequests },
-            { data: allPlans }
-          ] = await Promise.all([
-            supabase.from('profiles').select('*').in('id', clientIds),
-            supabase.from('weight_entries').select('*').in('client_id', clientIds).order('date', { ascending: false }),
-            supabase.from('physique_photos').select('*').in('client_id', clientIds),
-            supabase.from('photo_requests').select('*').in('client_id', clientIds),
-            supabase.from('nutrition_plans').select('*').in('client_id', clientIds)
-          ]);
-
-          formattedClients = clientsSettings.map((s: any) => {
-            const cProf = clientProfiles?.find(p => p.id === s.id) || {};
-            const entries = allEntries?.filter(e => e.client_id === s.id) || [];
-            const photos = allPhotos?.filter(p => p.client_id === s.id) || [];
-            const requests = allRequests?.filter(r => r.client_id === s.id) || [];
-            const plans = allPlans?.filter(p => p.client_id === s.id) || [];
-
-            return {
-              id: s.id,
-              name: cProf.full_name || 'Atleta',
-              email: cProf.email,
-              avatar: cProf.avatar_url,
-              unit: s.unit || 'kg',
-              targetWeeklyRate: s.target_weekly_rate,
-              milestone: s.milestone,
-              milestoneAchieved: s.milestone_achieved,
-              weightEntries: entries.map((e: any) => ({
-                id: e.id,
-                date: e.date,
-                weight: Number(e.weight),
-                notes: e.notes,
-                recordedBy: e.recorded_by,
-                movingAverage: Number(e.moving_average),
-                weeklyRate: Number(e.weekly_rate),
-                excludeFromCalculations: e.exclude_from_calculations,
-                isLowest: e.is_lowest,
-                isHighest: e.is_highest,
-                nutritionId: e.active_nutrition_id
-              })),
-              photoRequests: requests,
-              physiquePhotos: photos,
-              nutritionData: plans
-            };
-          });
+        if (profileError || !profile) {
+          console.warn('kCaliper: Perfil no encontrado para el usuario:', userId, profileError);
+          setLoading(false);
+          return;
         }
         
-        // 2.5 Load Coach's own weight entries + settings (Personal Profile)
-        const [{ data: personalEntries }, { data: coachSettings }] = await Promise.all([
-          supabase.from('weight_entries').select('*').eq('client_id', coachId).order('date', { ascending: false }),
-          supabase.from('client_settings').select('*').eq('id', coachId).maybeSingle()
-        ]);
+        // 1.5 CHECK IF ACCOUNT IS AN INFLUENCER
+        const { data: influencer } = await supabase
+          .from('influencers')
+          .select('email')
+          .eq('email', profile.email)
+          .maybeSingle();
 
-        const selfData: Client = {
-          id: coachId,
-          name: profile.full_name || 'Coach',
-          email: profile.email,
-          unit: coachSettings?.unit || 'kg',
-          country: coachSettings?.country || '',
-          targetWeeklyRate: coachSettings?.target_weekly_rate ?? -0.5,
-          milestone: coachSettings?.milestone,
-          milestoneAchieved: coachSettings?.milestone_achieved,
-          weightEntries: (personalEntries || []).map((e: any) => ({
-            id: e.id,
-            date: e.date,
-            weight: Number(e.weight),
-            notes: e.notes,
-            recordedBy: e.recorded_by,
-            movingAverage: Number(e.moving_average),
-            weeklyRate: Number(e.weekly_rate),
-            excludeFromCalculations: e.exclude_from_calculations,
-            isLowest: e.is_lowest,
-            isHighest: e.is_highest,
-            nutritionId: e.active_nutrition_id
-          })),
-          createdAt: profile.created_at || new Date().toISOString()
-        };
+        const isInfluencer = !!influencer;
 
-        setCoach({ 
-          id: coachId, 
-          name: profile.full_name || 'Coach', 
-          email: profile.email,
-          clients: formattedClients,
-          self: selfData
-        });
+        if (isInfluencer) {
+          console.log("kCaliper: Cuenta Influencer detectada. Cargando Mock Data de seguridad...");
+          await initializeMockMode(userId, true, profile.full_name, profile.email);
+          return;
+        }
 
-        const { data: alertsData } = await supabase.from('alerts').select('*').eq('coach_id', coachId).order('date', { ascending: false });
-        if (alertsData) setAlerts(alertsData as Alert[]);
+        setCurrentUser(profile as User);
 
-      } else {
-        // Athlete Flow
-        const { data: settings } = await supabase.from('client_settings').select('*').eq('id', userId).single();
-        
-        const [
-          { data: allEntries },
-          { data: allPhotos },
-          { data: allRequests },
-          { data: allPlans }
-        ] = await Promise.all([
-          supabase.from('weight_entries').select('*').eq('client_id', userId).order('date', { ascending: false }),
-          supabase.from('physique_photos').select('*').eq('client_id', userId),
-          supabase.from('photo_requests').select('*').eq('client_id', userId),
-          supabase.from('nutrition_plans').select('*').eq('client_id', userId)
-        ]);
+        // 2. Separate logic by Role
+        if (profile.role === 'coach') {
+          const coachId = profile.id;
+          const { data: clientsSettings, error: settingsError } = await supabase
+            .from('client_settings')
+            .select('*')
+            .eq('coach_id', coachId);
+          
+          if (settingsError) {
+            console.error("kCaliper: Error cargando settings de clientes:", settingsError);
+          }
 
-        const myClientData = {
-          id: userId,
-          name: profile.full_name || 'Atleta',
-          email: profile.email,
-          avatar: profile.avatar_url,
-          unit: settings?.unit || 'kg',
-          targetWeeklyRate: settings?.target_weekly_rate || -0.5,
-          milestone: settings?.milestone,
-          milestoneAchieved: settings?.milestone_achieved,
-          weightEntries: (allEntries || []).map((e: any) => ({
-            id: e.id,
-            date: e.date,
-            weight: Number(e.weight),
-            notes: e.notes,
-            recordedBy: e.recorded_by,
-            movingAverage: Number(e.moving_average),
-            weeklyRate: Number(e.weekly_rate),
-            excludeFromCalculations: e.exclude_from_calculations,
-            isLowest: e.is_lowest,
-            isHighest: e.is_highest,
-            nutritionId: e.active_nutrition_id
-          })),
-          photoRequests: allRequests || [],
-          physiquePhotos: allPhotos || [],
-          nutritionData: allPlans || []
-        };
-        
-        setCoach({ id: settings?.coach_id || 'unassigned', name: 'Mi Coach', clients: [myClientData] });
+          let formattedClients: any[] = [];
+          
+          if (clientsSettings && clientsSettings.length > 0) {
+            const clientIds = clientsSettings.map(s => s.id);
+
+            const results = await Promise.all([
+              supabase.from('profiles').select('*').in('id', clientIds),
+              supabase.from('weight_entries').select('*').in('client_id', clientIds).order('date', { ascending: false }),
+              supabase.from('physique_photos').select('*').in('client_id', clientIds),
+              supabase.from('photo_requests').select('*').in('client_id', clientIds),
+              supabase.from('nutrition_plans').select('*').in('client_id', clientIds)
+            ]);
+
+            const [clientProfiles, allEntries, allPhotos, allRequests, allPlans] = results.map(r => r.data);
+
+            formattedClients = clientsSettings.map((s: any) => {
+              const cProf = clientProfiles?.find((p: any) => p.id === s.id) || {};
+              const entries = allEntries?.filter((e: any) => e.client_id === s.id) || [];
+              const photos = allPhotos?.filter((p: any) => p.client_id === s.id) || [];
+              const requests = allRequests?.filter((r: any) => r.client_id === s.id) || [];
+              const plans = allPlans?.filter((p: any) => p.client_id === s.id) || [];
+
+              return {
+                id: s.id,
+                name: cProf.full_name || 'Atleta',
+                email: cProf.email,
+                avatar: cProf.avatar_url,
+                unit: s.unit || 'kg',
+                targetWeeklyRate: s.target_weekly_rate,
+                milestone: s.milestone,
+                milestoneAchieved: s.milestone_achieved,
+                weightEntries: entries.map((e: any) => ({
+                  id: e.id,
+                  date: e.date,
+                  weight: Number(e.weight),
+                  notes: e.notes,
+                  recordedBy: e.recorded_by,
+                  movingAverage: Number(e.moving_average),
+                  weeklyRate: Number(e.weekly_rate),
+                  excludeFromCalculations: e.exclude_from_calculations,
+                  isLowest: e.is_lowest,
+                  isHighest: e.is_highest,
+                  nutritionId: e.active_nutrition_id
+                })),
+                photoRequests: requests,
+                physiquePhotos: photos,
+                nutritionData: plans
+              };
+            });
+          }
+          
+          // 2.5 Load Coach's own weight entries + settings (Personal Profile)
+          const resultsSelf = await Promise.all([
+            supabase.from('weight_entries').select('*').eq('client_id', coachId).order('date', { ascending: false }),
+            supabase.from('client_settings').select('*').eq('id', coachId).maybeSingle()
+          ]);
+
+          const [personalEntries, coachSettings] = resultsSelf.map(r => r.data);
+
+          const selfData: Client = {
+            id: coachId,
+            name: profile.full_name || 'Coach',
+            email: profile.email,
+            unit: (coachSettings as any)?.unit || 'kg',
+            country: (coachSettings as any)?.country || '',
+            targetWeeklyRate: (coachSettings as any)?.target_weekly_rate ?? -0.5,
+            milestone: (coachSettings as any)?.milestone,
+            milestoneAchieved: (coachSettings as any)?.milestone_achieved,
+            weightEntries: (personalEntries || []).map((e: any) => ({
+              id: e.id,
+              date: e.date,
+              weight: Number(e.weight),
+              notes: e.notes,
+              recordedBy: e.recorded_by,
+              movingAverage: Number(e.moving_average),
+              weeklyRate: Number(e.weekly_rate),
+              excludeFromCalculations: e.exclude_from_calculations,
+              isLowest: e.is_lowest,
+              isHighest: e.is_highest,
+              nutritionId: e.active_nutrition_id
+            })),
+            createdAt: profile.created_at || new Date().toISOString()
+          };
+
+          setCoach({ 
+            id: coachId, 
+            name: profile.full_name || 'Coach', 
+            email: profile.email,
+            clients: formattedClients,
+            self: selfData
+          });
+
+          const { data: alertsData } = await supabase.from('alerts').select('*').eq('coach_id', coachId).order('date', { ascending: false });
+          if (alertsData) setAlerts(alertsData as Alert[]);
+
+        } else {
+          // Athlete Flow
+          const { data: settings } = await supabase.from('client_settings').select('*').eq('id', userId).single();
+          
+          const resultsAthlete = await Promise.all([
+            supabase.from('weight_entries').select('*').eq('client_id', userId).order('date', { ascending: false }),
+            supabase.from('physique_photos').select('*').eq('client_id', userId),
+            supabase.from('photo_requests').select('*').eq('client_id', userId),
+            supabase.from('nutrition_plans').select('*').eq('client_id', userId)
+          ]);
+
+          const [allEntries, allPhotos, allRequests, allPlans] = resultsAthlete.map(r => r.data);
+
+          const myClientData = {
+            id: userId,
+            name: profile.full_name || 'Atleta',
+            email: profile.email,
+            avatar: profile.avatar_url,
+            unit: settings?.unit || 'kg',
+            targetWeeklyRate: settings?.target_weekly_rate || -0.5,
+            milestone: settings?.milestone,
+            milestoneAchieved: settings?.milestone_achieved,
+            weightEntries: (allEntries || []).map((e: any) => ({
+              id: e.id,
+              date: e.date,
+              weight: Number(e.weight),
+              notes: e.notes,
+              recordedBy: e.recorded_by,
+              movingAverage: Number(e.moving_average),
+              weeklyRate: Number(e.weekly_rate),
+              excludeFromCalculations: e.exclude_from_calculations,
+              isLowest: e.is_lowest,
+              isHighest: e.is_highest,
+              nutritionId: e.active_nutrition_id
+            })),
+            photoRequests: allRequests || [],
+            physiquePhotos: allPhotos || [],
+            nutritionData: allPlans || []
+          };
+          
+          setCoach({ id: settings?.coach_id || 'unassigned', name: 'Mi Coach', clients: [myClientData] });
+        }
+      } catch (err) {
+        console.error("kCaliper: Error en loadUserData:", err);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
 
     loadInitialData();
