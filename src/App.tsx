@@ -105,6 +105,25 @@ export default function App() {
                localStorage.setItem('kcaliper_onboarding_done', 'true');
             }
         }
+        // 4. SYNC PENDING WEIGHT (Safety check)
+        const pendingWeight = localStorage.getItem('kcaliper_pending_weight');
+        if (pendingWeight) {
+          try {
+            const parsed = JSON.parse(pendingWeight);
+            await supabase.from('weight_entries').insert({
+              client_id: session.user.id,
+              date: new Date().toISOString().split('T')[0],
+              weight: parsed.weight,
+              notes: 'Peso Inicial (Onboarding)',
+              recorded_by: 'client'
+            });
+            localStorage.removeItem('kcaliper_pending_weight');
+            console.log("Sincronización de peso reactiva (App) completada.");
+          } catch (e) {
+            console.error("Error syncing pending weight in App logic:", e);
+          }
+        }
+
         // Coaches don't strictly need onboarding yet, bypass it
         if (role === 'coach') hasOnboarded = true;
         

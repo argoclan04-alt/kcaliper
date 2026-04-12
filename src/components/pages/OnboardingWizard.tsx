@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ChevronRight, CheckCircle2, Loader2, Dumbbell, Users, Activity, MessageSquare } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ArrowLeft, 
+  ChevronRight, 
+  CheckCircle2, 
+  Loader2, 
+  Dumbbell, 
+  Users, 
+  Activity, 
+  MessageSquare,
+  TrendingUp 
+} from 'lucide-react';
 
 interface OnboardingWizardProps {
   onBack: () => void;
@@ -10,6 +21,15 @@ type GlobalStep = 'role' | 'questions' | 'analyzing' | 'tutorial' | 'paywall';
 type Role = 'athlete' | 'coach' | null;
 
 export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) => {
+  // Check for missing credentials on mount
+  useEffect(() => {
+    const url = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    if (!url || !key || key.includes('mock')) {
+       console.error("Supabase API keys missing in Vercel/Local env.");
+    }
+  }, []);
+
   // Initialize with role from localStorage if available, jump straight to questions
   const storedAuth = typeof window !== 'undefined' ? localStorage.getItem('kcaliper_auth') : null;
   const initialRole = storedAuth ? JSON.parse(storedAuth).role : 'athlete';
@@ -68,27 +88,35 @@ export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) 
     setGlobalStep('analyzing');
     setIsTransitioning(false);
 
-    // GUARDAR PESO REAL EN LA BASE DE DATOS PARA ATLETAS
+    // GUARDAR PESO EN LA BASE DE DATOS O LOCALSTORAGE
     if (role === 'athlete' && weightValue) {
        const wValue = parseFloat(weightValue);
        if (!isNaN(wValue)) {
-          // Si eligen libras, Supabase espera KG o dependiendo del setup 
-          // pero como es demo simplificada, lo guardamos directo 
+          const finalWeight = unit === 'lbs' ? Number((wValue / 2.20462).toFixed(2)) : wValue;
+          
           try {
-             // Correct path to reach src/lib/supabase from src/components/pages/
              const { supabase } = await import('../../lib/supabase');
              const { data: { session } } = await supabase.auth.getSession();
+             
              if (session) {
+                // If logged in, save to DB immediately
                 await supabase.from('weight_entries').insert({
                    client_id: session.user.id,
                    date: new Date().toISOString().split('T')[0],
-                   weight: unit === 'lbs' ? Number((wValue / 2.20462).toFixed(2)) : wValue,
+                   weight: finalWeight,
                    notes: 'Peso Inicial (Onboarding)',
                    recorded_by: 'client'
                 });
+             } else {
+                // FALLBACK: Store locally to be claimed after signup
+                localStorage.setItem('kcaliper_pending_weight', JSON.stringify({
+                  weight: finalWeight,
+                  unit: unit,
+                  timestamp: new Date().toISOString()
+                }));
              }
           } catch (err) {
-             console.error("Error saving initial weight:", err);
+             console.error("Error persisting initial weight:", err);
           }
        }
     }
@@ -100,7 +128,7 @@ export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) 
     }, 3600);
   };
 
-  const nextTutorialSlide = () => {
+  const nextTutorialSlide = async () => {
     if (tutorialSlide < 2) {
       setIsTransitioning(true);
       setTimeout(() => {
@@ -109,8 +137,23 @@ export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) 
       }, 300);
     } else {
       localStorage.setItem('kcaliper_onboarding_done', 'true');
-      window.history.pushState({}, '', '/signup');
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      
+      try {
+        const { supabase } = await import('../../lib/supabase');
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // If they are already logged in, take them home!
+        if (session) {
+          window.location.href = '/dashboard';
+        } else {
+          // New users go to signup
+          window.history.pushState({}, '', '/signup');
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }
+      } catch (e) {
+        window.history.pushState({}, '', '/signup');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      }
     }
   };
 
@@ -535,7 +578,4 @@ export const OnboardingWizard = ({ onBack, onComplete }: OnboardingWizardProps) 
   );
 };
 
-// SVG Icons missing from core import
-function TrendingUp(props: any) {
-  return <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-}
+

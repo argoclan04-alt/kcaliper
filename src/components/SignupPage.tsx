@@ -71,6 +71,25 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
       if (error) throw error;
 
       if (data?.user) {
+        // SYNC PENDING WEIGHT FROM ONBOARDING
+        const pendingWeight = localStorage.getItem('kcaliper_pending_weight');
+        if (pendingWeight) {
+          try {
+            const parsed = JSON.parse(pendingWeight);
+            await supabase.from('weight_entries').insert({
+              client_id: data.user.id,
+              date: new Date().toISOString().split('T')[0],
+              weight: parsed.weight,
+              notes: 'Peso Inicial (Onboarding)',
+              recorded_by: 'client'
+            });
+            localStorage.removeItem('kcaliper_pending_weight');
+            console.log("Sincronización de peso completada.");
+          } catch (e) {
+            console.error("Error syncing pending weight:", e);
+          }
+        }
+
         // Trigger canvas transition
         setReverseCanvasVisible(true);
         setTimeout(() => setInitialCanvasVisible(false), 50);
