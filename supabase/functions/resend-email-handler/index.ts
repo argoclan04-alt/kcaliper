@@ -1,7 +1,11 @@
 // @ts-ignore - Deno imports
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SMTP_USER = Deno.env.get("SMTP_USER") || "contacto@kcaliper.com";
+const SMTP_PASS = Deno.env.get("SMTP_PASS") || "Tenkaichi23$";
+const SMTP_HOST = Deno.env.get("SMTP_HOST") || "mail.privateemail.com";
+const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") || "465");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,7 +34,7 @@ serve(async (req: Request) => {
       subject = "Hemos recibido tu aplicación a kCaliper 🤝";
       html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #050508; color: #ffffff;">
-          <h1 style="color: #6C5CE7;">Hola ${record.name},</h1>
+          <h1 style="color: #00D2FF;">Hola ${record.name},</h1>
           <p style="color: #999;">Hemos recibido tu información para el programa de embajadores de <strong>kCaliper.ai</strong>.</p>
           <p style="color: #999;">Nuestros asesores están revisando tu perfil de Instagram (${record.ig_handle}) y en menos de 48 horas te enviaremos una actualización.</p>
           <br/>
@@ -45,7 +49,7 @@ serve(async (req: Request) => {
       subject = "Tu lugar en kCaliper está asegurado 🎯";
       html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #050508; color: #ffffff;">
-          <h1 style="color: #6C5CE7;">Bienvenido a los Fundadores</h1>
+          <h1 style="color: #00D2FF;">Bienvenido a los Fundadores</h1>
           <p style="color: #999;">Has asegurado tu lugar en la lista de early access de kCaliper.</p>
           <p style="color: #999;">Te notificaremos en cuanto se liberen los espacios de la plataforma.</p>
           <br/>
@@ -54,35 +58,44 @@ serve(async (req: Request) => {
       `;
     }
     else {
-      throw new Error("Unknown payload format.");
+      // Manual trigger or other format
+      to = payload.to || "";
+      subject = payload.subject || "Notificación de kCaliper";
+      html = payload.html || "";
     }
 
-    if (!RESEND_API_KEY) throw new Error("Missing RESEND_API_KEY environment variable.");
+    if (!to) throw new Error("Recipient email is missing.");
 
-    const resendReq = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "kCaliper <hola@kcaliper.com>", // You must verify this domain in Resend
-        to: [to],
-        subject: subject,
-        html: html,
-      }),
+    // Initialize SMTP client
+    const client = new SmtpClient();
+
+    await client.connectTLS({
+      hostname: SMTP_HOST,
+      port: SMTP_PORT,
+      username: SMTP_USER,
+      password: SMTP_PASS,
     });
 
-    const resendRes = await resendReq.json();
+    await client.send({
+      from: "kCaliper AI <contacto@kcaliper.com>",
+      to: to,
+      subject: subject,
+      content: html,
+      html: html,
+    });
 
-    return new Response(JSON.stringify(resendRes), {
+    await client.close();
+
+    return new Response(JSON.stringify({ success: true, message: "Email sent successfully via SMTP" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: resendReq.ok ? 200 : 400,
+      status: 200,
     });
   } catch (error: any) {
+    console.error("SMTP Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
     });
   }
 });
+
