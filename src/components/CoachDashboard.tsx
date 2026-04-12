@@ -296,12 +296,12 @@ export function CoachDashboard({
                           </Badge>
 
                           <Badge variant="outline" className="gap-1 h-6 bg-amber-50 border-0 rounded-full dark:bg-amber-950/30 text-amber-700 dark:text-amber-400">
-                            <span className="font-bold">Target: {client.targetWeeklyRate > 0 ? '+' : ''}{client.targetWeeklyRate.toFixed(1)}</span>
+                            <span className="font-bold">Target: {client.targetWeeklyRate > 0 ? '+' : ''}{(client.targetWeeklyRate || 0).toFixed(1)}</span>
                           </Badge>
                           
                           {client.milestone && (
                             <Badge variant="outline" className={`gap-1 h-6 border-0 rounded-full ${client.milestoneAchieved ? 'bg-purple-100 text-purple-700' : 'bg-slate-50 text-slate-600'}`}>
-                              <span className="font-bold">Goal: {client.milestone.toFixed(1)}</span>
+                              <span className="font-bold">Goal: {(client.milestone || 0).toFixed(1)}</span>
                             </Badge>
                           )}
                           

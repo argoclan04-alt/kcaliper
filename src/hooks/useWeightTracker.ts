@@ -566,6 +566,26 @@ export function useWeightTracker() {
         user = estebanUsers[0];
       }
       setCurrentUser(user as any);
+    } else if (accountId === 'real-coach') {
+      // Real-world coach demo (empty but functional)
+      setCoach({ id: accountIdOrUserId, name: 'Coach Kcaliper', clients: [] });
+      setAlerts([]);
+      setCurrentUser({
+        id: accountIdOrUserId,
+        name: 'Coach Kcaliper',
+        email: 'coach@kcaliper.ai',
+        role: 'coach'
+      } as any);
+    } else if (accountId === 'real-athlete') {
+      // Real-world athlete demo (onboarding path)
+      setCoach(null);
+      setAlerts([]);
+      setCurrentUser({
+        id: accountIdOrUserId,
+        name: 'Athlete Kcaliper',
+        email: 'atleta@kcaliper.ai',
+        role: 'client'
+      } as any);
     } else {
       // Default: load Carlos / Carlos Rodriguez / Argo data
       const accountId = localStorage.getItem('kcaliper_account') || 'argo';

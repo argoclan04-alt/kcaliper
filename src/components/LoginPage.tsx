@@ -56,12 +56,51 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
           plan: 'pro',
           timestamp: new Date().toISOString()
         }));
-        localStorage.setItem('kcaliper_account', 'esteban'); // CRITICAL: Signal which data to load
+        localStorage.setItem('kcaliper_account', 'esteban');
         localStorage.setItem('kcaliper_onboarding_done', 'true');
         
         setReverseCanvasVisible(true);
         setTimeout(() => setInitialCanvasVisible(false), 50);
         toast.success(`Modo Demo: Bienvenido de nuevo, Esteban.`);
+        setStep("success");
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
+        return;
+      }
+
+      // NEW: Real Coach Test Account Bypass
+      if (email.trim() === 'coach@kcaliper.ai' && password === 'kcaliper2026') {
+        localStorage.setItem('kcaliper_auth', JSON.stringify({
+          email: 'coach@kcaliper.ai',
+          role: 'coach',
+          plan: 'pro',
+          timestamp: new Date().toISOString()
+        }));
+        localStorage.setItem('kcaliper_account', 'real-coach');
+        localStorage.setItem('kcaliper_onboarding_done', 'true');
+        
+        setReverseCanvasVisible(true);
+        setTimeout(() => setInitialCanvasVisible(false), 50);
+        toast.success(`Acceso Coach Real Concedido.`);
+        setStep("success");
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
+        return;
+      }
+
+      // NEW: Real Athlete Test Account Bypass
+      if (email.trim() === 'atleta@kcaliper.ai' && password === 'kcaliper2026') {
+        localStorage.setItem('kcaliper_auth', JSON.stringify({
+          email: 'atleta@kcaliper.ai',
+          role: 'athlete',
+          plan: 'pro',
+          timestamp: new Date().toISOString()
+        }));
+        localStorage.setItem('kcaliper_account', 'real-athlete');
+        // Let them go through onboarding
+        localStorage.removeItem('kcaliper_onboarding_done');
+        
+        setReverseCanvasVisible(true);
+        setTimeout(() => setInitialCanvasVisible(false), 50);
+        toast.success(`Acceso Atleta Real Concedido.`);
         setStep("success");
         setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
         return;
