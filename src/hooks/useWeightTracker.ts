@@ -533,10 +533,13 @@ export function useWeightTracker() {
 
     if (accountId === 'esteban' || isInfluencerOverride) {
       // Load Esteban's data
-      const clientsWithRates = estebanCoach.clients.map(client => ({
-        ...client,
-        weightEntries: recalculateAllWeeklyRates(client.weightEntries)
-      }));
+      const clientsWithRates = estebanCoach.clients.map(client => {
+        const withRates = recalculateAllWeeklyRates(client.weightEntries);
+        return {
+          ...client,
+          weightEntries: findLowestAndHighestWeights(withRates)
+        };
+      });
 
       // Override the core coach profile with the real user's details if provided by an influencer signup
       const finalCoachProfile = {

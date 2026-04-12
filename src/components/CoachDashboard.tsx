@@ -288,15 +288,25 @@ export function CoachDashboard({
                           </Badge>
                           
                           <Badge variant="outline" className={`gap-1 h-6 border-0 rounded-full ${
-                            (client.targetWeeklyRate < 0 ? stats.weeklyRate <= 0.05 : stats.weeklyRate >= -0.05) 
+                            (client.targetWeeklyRate < 0 ? stats.weeklyRate <= (client.targetWeeklyRate + 0.1) : stats.weeklyRate >= (client.targetWeeklyRate - 0.1)) 
                               ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' 
                               : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
                           }`}>
                             <span className="font-bold">{stats.weeklyRate > 0 ? '+' : ''}{stats.weeklyRate.toFixed(2)} {client.unit}</span>
                           </Badge>
+
+                          <Badge variant="outline" className="gap-1 h-6 bg-amber-50 border-0 rounded-full dark:bg-amber-950/30 text-amber-700 dark:text-amber-400">
+                            <span className="font-bold">Target: {client.targetWeeklyRate > 0 ? '+' : ''}{client.targetWeeklyRate.toFixed(1)}</span>
+                          </Badge>
+                          
+                          {client.milestone && (
+                            <Badge variant="outline" className={`gap-1 h-6 border-0 rounded-full ${client.milestoneAchieved ? 'bg-purple-100 text-purple-700' : 'bg-slate-50 text-slate-600'}`}>
+                              <span className="font-bold">Goal: {client.milestone.toFixed(1)}</span>
+                            </Badge>
+                          )}
                           
                           {client.weightEntries.some(e => e.isLowest) && (
-                            <Badge className="h-6 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-0 font-bold rounded-full animate-pulse">
+                            <Badge className="h-6 bg-yellow-400 hover:bg-yellow-500 text-yellow-950 border-0 font-bold rounded-full animate-pulse shadow-sm shadow-yellow-500/50">
                               LOWEST ✨
                             </Badge>
                           )}
