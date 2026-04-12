@@ -12,6 +12,7 @@ import FinalCTA from '../components/landing/FinalCTA';
 import Footer from '../components/landing/Footer';
 import GlobalFloatingMessages from '../components/landing/GlobalFloatingMessages';
 import FomoBanner from '../components/landing/FomoBanner';
+import SocialProofWidget from '../components/landing/SocialProofWidget';
 
 const LandingPage = () => {
   useEffect(() => {
@@ -42,6 +43,8 @@ const LandingPage = () => {
         <FinalCTA />
       </main>
       <Footer />
+      {/* Dynamic Social Proof Widget */}
+      <SocialProofWidget />
     </div>
   );
 };

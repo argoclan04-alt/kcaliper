@@ -146,7 +146,7 @@ const GlobalFloatingMessages = ({ type = 'athlete' }) => {
       category,
       startX: Math.random() * 80 + 10, // 10-90%
       startY: Math.random() * 100, // Will be positioned based on scroll
-      duration: 6 + Math.random() * 4, // 6-10 seconds
+      duration: 18 + Math.random() * 8, // 18-26 seconds (much slower)
       direction: Math.random() > 0.5 ? 1 : -1,
       size: Math.random() > 0.7 ? 'large' : 'small',
     };
@@ -162,14 +162,14 @@ const GlobalFloatingMessages = ({ type = 'athlete' }) => {
       setElements(prev => {
         const newElements = [...prev];
         // Replace 3-5 random elements
-        const replaceCount = Math.floor(Math.random() * 3) + 3;
+        const replaceCount = Math.floor(Math.random() * 2) + 1;
         for (let i = 0; i < replaceCount; i++) {
           const randomIndex = Math.floor(Math.random() * newElements.length);
           newElements[randomIndex] = generateElement(Date.now() + i);
         }
         return newElements;
       });
-    }, 4000);
+    }, 6000);
 
     return () => clearInterval(interval);
   }, [generateElement]);
