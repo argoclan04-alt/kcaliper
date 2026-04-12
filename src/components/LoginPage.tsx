@@ -48,61 +48,39 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
     setLoading(true);
 
     try {
-      // SPECIAL CASE: Esteban Mock Account Bypass
-      if (email.trim() === 'esteban@kcaliper.ai' && password === 'esteban2026') {
-        localStorage.setItem('kcaliper_auth', JSON.stringify({
-          email: 'esteban@kcaliper.ai',
-          role: 'coach',
-          plan: 'pro',
-          timestamp: new Date().toISOString()
-        }));
-        localStorage.setItem('kcaliper_account', 'esteban');
-        localStorage.setItem('kcaliper_onboarding_done', 'true');
-        
-        setReverseCanvasVisible(true);
-        setTimeout(() => setInitialCanvasVisible(false), 50);
-        toast.success(`Modo Demo: Bienvenido de nuevo, Esteban.`);
-        setStep("success");
-        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
-        return;
-      }
-
-      // NEW: Real Coach Test Account Bypass
-      if (email.trim() === 'coach@kcaliper.ai' && password === 'kcaliper2026') {
-        localStorage.setItem('kcaliper_auth', JSON.stringify({
-          email: 'coach@kcaliper.ai',
-          role: 'coach',
-          plan: 'pro',
-          timestamp: new Date().toISOString()
-        }));
-        localStorage.setItem('kcaliper_account', 'real-coach');
-        localStorage.setItem('kcaliper_onboarding_done', 'true');
-        
-        setReverseCanvasVisible(true);
-        setTimeout(() => setInitialCanvasVisible(false), 50);
-        toast.success(`Acceso Coach Real Concedido.`);
-        setStep("success");
-        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
-        return;
-      }
-
-      // NEW: Real Athlete Test Account Bypass
-      if (email.trim() === 'atleta@kcaliper.ai' && password === 'kcaliper2026') {
-        localStorage.setItem('kcaliper_auth', JSON.stringify({
-          email: 'atleta@kcaliper.ai',
-          role: 'athlete',
-          plan: 'pro',
-          timestamp: new Date().toISOString()
-        }));
+      const emailLower = email.trim().toLowerCase();
+      
+      // MASTER CREDENTIALS BYPASS (As requested by user)
+      if (emailLower === 'atleta@kcaliper.ai' && password === 'atleta') {
+        localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'athlete', plan: 'pro', timestamp: new Date().toISOString() }));
         localStorage.setItem('kcaliper_account', 'real-athlete');
-        // Let them go through onboarding
         localStorage.removeItem('kcaliper_onboarding_done');
-        
-        setReverseCanvasVisible(true);
-        setTimeout(() => setInitialCanvasVisible(false), 50);
-        toast.success(`Acceso Atleta Real Concedido.`);
         setStep("success");
-        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
+        return;
+      }
+      
+      if (emailLower === 'coach@kcaliper.ai' && password === 'coach') {
+        localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'coach', plan: 'pro', timestamp: new Date().toISOString() }));
+        localStorage.setItem('kcaliper_account', 'real-coach');
+        setStep("success");
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
+        return;
+      }
+      
+      if ((emailLower === 'admin@kcaliper.ai' || emailLower === 'contacto@kcaliper.com') && password === 'Tenkaichi23') {
+        localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'super_admin', plan: 'pro', timestamp: new Date().toISOString() }));
+        setStep("success");
+        setTimeout(() => { window.location.href = '/admin'; }, 1000);
+        return;
+      }
+
+      // Legacy Esteban Bypass (Optional but kept for demo)
+      if (emailLower === 'esteban@kcaliper.ai' && password === 'esteban2026') {
+        localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'coach', plan: 'pro', timestamp: new Date().toISOString() }));
+        localStorage.setItem('kcaliper_account', 'esteban');
+        setStep("success");
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
         return;
       }
 
@@ -111,19 +89,29 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
         password: password,
       });
 
-      if (error) throw error;
+      if (error) {
+         // Specialized error handling for common issues
+         if (error.message.includes('Invalid login credentials')) {
+            throw new Error('Email o contraseña incorrectos. Verifica tus datos.');
+         }
+         throw error;
+      };
 
-      if (data.session) {
-        // Redirection logic stays here
+      if (data?.user) {
+        // Trigger canvas transition
         setReverseCanvasVisible(true);
         setTimeout(() => setInitialCanvasVisible(false), 50);
-        
-        toast.success(`¡Bienvenido de nuevo!`);
+
+        toast.success(`Acceso concedido. Bienvenido de nuevo.`);
         setStep("success");
-        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
+        
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1500);
       }
     } catch (error: any) {
       toast.error(error.message || 'Error al iniciar sesión.');
+      console.error('Login Error details:', error);
       setLoading(false);
     }
   };
