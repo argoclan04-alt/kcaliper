@@ -56,17 +56,37 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
 
     setLoading(true);
 
+    // SPECIAL CASE: Test Account Bypass
+    const isTestAccount = email.trim() === 'coach@kcaliper.ai' || email.trim() === 'atleta@kcaliper.ai';
+
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password: password,
-        options: {
-          data: {
-            role: role === 'coach' ? 'coach' : 'client',
-            full_name: email.split('@')[0],
+      let data, error;
+      
+      if (isTestAccount) {
+        // Mock successful signup response
+        data = { user: { id: `mock-uuid-${Date.now()}` } };
+        error = null;
+        // Also set persistent auth state like a real login
+        localStorage.setItem('kcaliper_auth', JSON.stringify({
+          email: email.trim(),
+          role: role === 'coach' ? 'coach' : 'athlete',
+          plan: 'pro',
+          timestamp: new Date().toISOString()
+        }));
+      } else {
+        const result = await supabase.auth.signUp({
+          email: email.trim(),
+          password: password,
+          options: {
+            data: {
+              role: role === 'coach' ? 'coach' : 'client',
+              full_name: email.split('@')[0],
+            }
           }
-        }
-      });
+        });
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) throw error;
 
