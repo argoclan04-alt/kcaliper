@@ -106,10 +106,67 @@ export function AuthPage({ initialMode = 'login', onboardingData }: AuthPageProp
 
     setLoading(true);
 
+    const emailLower = email.trim().toLowerCase();
+
     try {
+      if (mode === 'login') {
+        // --- 1. ADMIN BYPASS ---
+        if ((emailLower === 'admin@kcaliper.ai' || emailLower === 'contacto@kcaliper.com') && password === 'Tenkaichi23') {
+          await supabase.auth.signOut();
+          localStorage.setItem('kcaliper_auth', JSON.stringify({ 
+            email: emailLower, 
+            role: 'coach', 
+            plan: 'pro', 
+            timestamp: new Date().toISOString() 
+          }));
+          localStorage.setItem('kcaliper_account', 'esteban');
+          toast.success("Iniciando sesión en panel Administrativo...");
+          setTimeout(() => { window.location.href = "/dashboard"; }, 1000);
+          return;
+        }
+
+        // --- 2. COACH DEMO (Esteban Mock) ---
+        if ((emailLower === 'coach@kcaliper.ai' || emailLower === 'esteban@kcaliper.ai') && password === 'coach') {
+          await supabase.auth.signOut();
+          localStorage.setItem('kcaliper_auth', JSON.stringify({ 
+            email: emailLower, 
+            role: 'coach', 
+            plan: 'pro', 
+            timestamp: new Date().toISOString() 
+          }));
+          localStorage.setItem('kcaliper_account', 'esteban');
+          toast.success("Iniciando sesión en Dashboard de Coach...");
+          setTimeout(() => { window.location.href = "/dashboard"; }, 1000);
+          return;
+        }
+
+        // --- 3. ATHLETE DEMO ---
+        if (emailLower === 'atleta@kcaliper.ai' && password === 'atleta') {
+          await supabase.onAuthStateChange(async () => {}); // No-op to prevent race
+          await supabase.auth.signOut();
+          localStorage.setItem('kcaliper_auth', JSON.stringify({ 
+            email: emailLower, 
+            role: 'athlete', 
+            plan: 'pro', 
+            timestamp: new Date().toISOString() 
+          }));
+          localStorage.setItem('kcaliper_account', 'argo');
+          toast.success("Iniciando sesión en Perfil de Atleta...");
+          setTimeout(() => { window.location.href = "/dashboard"; }, 1000);
+          return;
+        }
+
+        // FALLBACK TO SUPABASE FOR PRODUCTION ACCOUNTS
+        const { error } = await supabase.auth.signInWithPassword({ email: emailLower, password });
+        if (error) throw error;
+        toast.success("Bienvenido de nuevo.");
+        window.location.href = "/dashboard";
+        return;
+      }
+
       if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: emailLower,
           password,
           options: {
             data: {
@@ -128,7 +185,7 @@ export function AuthPage({ initialMode = 'login', onboardingData }: AuthPageProp
         toast.success("Bienvenido de nuevo.");
         window.location.href = "/dashboard";
       } else if (mode === 'reset-request') {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        const { error } = await supabase.auth.resetPasswordForEmail(emailLower, {
           redirectTo: `${window.location.origin}/reset-password`,
         });
         if (error) throw error;
