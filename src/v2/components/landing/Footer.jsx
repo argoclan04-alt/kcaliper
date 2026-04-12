@@ -1,15 +1,22 @@
 import { motion } from 'framer-motion';
-import { Twitter, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { Instagram, Linkedin } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
+
+// TikTok icon (not in lucide-react)
+const TikTokIcon = (props) => (
+  <svg {...props} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V9.01a8.35 8.35 0 004.76 1.49V7.04a4.79 4.79 0 01-1-.35z"/>
+  </svg>
+);
 
 const Footer = () => {
   const { t, language } = useLanguage();
 
   const socialLinks = [
-    { icon: Twitter, href: '#', label: 'Twitter' },
     { icon: Instagram, href: 'https://instagram.com/kcaliperai', label: 'Instagram' },
+    { icon: TikTokIcon, href: 'https://tiktok.com/@kcaliperai', label: 'TikTok' },
     { icon: Linkedin, href: '#', label: 'LinkedIn' },
-    { icon: Youtube, href: '#', label: 'YouTube' },
   ];
 
   return (
@@ -59,13 +66,17 @@ const Footer = () => {
               {t('footer.links.product')}
             </h4>
             <ul className="space-y-3">
-              {['features', 'pricing', 'demo'].map((link) => (
-                <li key={link}>
+              {[
+                { key: 'features', href: '#features' },
+                { key: 'pricing', href: '#pricing' },
+                { key: 'demo', href: '#demo' },
+              ].map((link) => (
+                <li key={link.key}>
                   <a 
-                    href={`#${link}`} 
+                    href={link.href} 
                     className="text-white/50 hover:text-[#00D2FF] transition-colors text-sm block py-1"
                   >
-                    {t(`footer.links.${link}`)}
+                    {t(`footer.links.${link.key}`)}
                   </a>
                 </li>
               ))}
@@ -78,14 +89,18 @@ const Footer = () => {
               {t('footer.links.company')}
             </h4>
             <ul className="space-y-3">
-              {['about', 'blog', 'careers'].map((link) => (
-                <li key={link}>
-                  <a 
-                    href={link === 'about' ? '/nosotros' : '#'} 
+              {[
+                { key: 'about', href: '/nosotros' },
+                { key: 'blog', href: '#' },
+                { key: 'careers', href: '#' },
+              ].map((link) => (
+                <li key={link.key}>
+                  <Link 
+                    to={link.href}
                     className="text-white/50 hover:text-[#00D2FF] transition-colors text-sm block py-1"
                   >
-                    {t(`footer.links.${link}`)}
-                  </a>
+                    {t(`footer.links.${link.key}`)}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -97,14 +112,17 @@ const Footer = () => {
               {t('footer.links.legal')}
             </h4>
             <ul className="space-y-3">
-              {['privacy', 'terms'].map((link) => (
-                <li key={link}>
-                  <a 
-                    href="#" 
+              {[
+                { key: 'privacy', href: '/privacy' },
+                { key: 'terms', href: '/terms' },
+              ].map((link) => (
+                <li key={link.key}>
+                  <Link 
+                    to={link.href}
                     className="text-white/50 hover:text-[#00D2FF] transition-colors text-sm block py-1"
                   >
-                    {t(`footer.links.${link}`)}
-                  </a>
+                    {t(`footer.links.${link.key}`)}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -115,10 +133,10 @@ const Footer = () => {
         <div className="mt-12 pt-8 border-t border-white/10">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
             <p className="text-white/40 text-sm order-2 sm:order-1">
-              {t('footer.copyright')}
+              © 2026 kcaliper.com. Todos los derechos reservados.
             </p>
             <p className="text-white/30 text-xs order-1 sm:order-2">
-              {language === 'es' ? 'Hecho con 💙 para atletas y coaches' : 'Made with 💙 for athletes and coaches'}
+              Owned by Future Ventures Group LLC
             </p>
           </div>
         </div>

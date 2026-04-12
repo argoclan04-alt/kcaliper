@@ -3,64 +3,117 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, Video, MoreVertical, CheckCheck, Send } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
+// Scenario conversations based on CaliBot KB
+const scenarios = {
+  canchita: {
+    label: '🍿 Canchita',
+    labelEN: '🍿 Popcorn',
+    messages: [
+      { sender: 'user', text: 'Hola, ¿por qué subí 800g si solo comí canchita ayer? :(' },
+      { sender: 'bot', text: '¡Tranquilo! 😊 Esa variación es completamente normal. Las palomitas de maíz tienen alto contenido de sodio, lo que causa retención temporal de agua.' },
+      { sender: 'bot', text: 'No es grasa real. Tu cuerpo está reteniendo líquidos para equilibrar el sodio. Esto desaparecerá en 24-48 horas. 💧' },
+      { sender: 'bot', text: '¿Quieres que excluya este peso de la tendencia DEMA para que no afecte tu análisis real?' },
+      { sender: 'user', text: 'Sí, por favor' },
+      { sender: 'bot', text: '✅ Listo. Peso excluido del cálculo.\n\nTu tendencia real se mantiene perfecta: **-0.4 kg por semana**. Vas excelente según tu objetivo. 📉' },
+    ],
+  },
+  menstruacion: {
+    label: '🩸 Ciclo Menstrual',
+    labelEN: '🩸 Menstrual Cycle',
+    messages: [
+      { sender: 'user', text: 'Subí casi 2 kg y estoy a días de que me baje 😩' },
+      { sender: 'bot', text: 'Esto es completamente normal y esperado. En la fase lútea (días 15-28 del ciclo), la progesterona sube y genera retención de 0.5 a 3 kg.' },
+      { sender: 'bot', text: 'No es grasa. Es retención hídrica hormonal que desaparece al llegar la menstruación. De hecho, muchas atletas marcan su peso mínimo histórico justo después del periodo.' },
+      { sender: 'user', text: 'O sea que no arruiné mi progreso?' },
+      { sender: 'bot', text: 'Para nada. Tu tendencia DEMA de las últimas 3 semanas sigue en **-0.35 kg/semana**. Eso es tu progreso real.\n\nConsejo: incluir notas sobre tu ciclo en los pesajes mejora mucho la interpretación de los datos. 📊' },
+    ],
+  },
+  restaurante: {
+    label: '🍽️ Restaurante',
+    labelEN: '🍽️ Restaurant',
+    messages: [
+      { sender: 'user', text: 'Ayer fui a cenar a un restaurante y hoy subí 1.2 kg 😭' },
+      { sender: 'bot', text: 'Las comidas de restaurante suelen tener mucho más sodio que la comida casera: salsas comerciales, mantequilla, condimentos, carne marinada...' },
+      { sender: 'bot', text: 'Una cena alta en sodio puede generar retención de 0.5 a 2 litros de agua. Eso es exactamente lo que estás viendo en la báscula.' },
+      { sender: 'user', text: 'Pero comí bastante...' },
+      { sender: 'bot', text: 'Para acumular 1.2 kg de grasa real necesitarías un exceso de ~9,240 calorías en esa cena. Eso es físicamente casi imposible.\n\nTu tendencia DEMA sigue en **-0.5 kg/semana**. Una cena no cambia semanas de trabajo. 💪' },
+    ],
+  },
+  creatina: {
+    label: '💊 Creatina',
+    labelEN: '💊 Creatine',
+    messages: [
+      { sender: 'user', text: 'Empecé creatina hace 5 días y subí 2.3 kg 😰 ¿Es grasa?' },
+      { sender: 'bot', text: 'No. Lo que describes es el efecto esperado de la creatina monohidratada.' },
+      { sender: 'bot', text: 'La creatina genera retención de agua intracelular en el músculo. Durante las primeras 1-2 semanas, es normal ganar entre 0.5 y 3 kg que son agua, no grasa.' },
+      { sender: 'user', text: 'Y si dejo de tomarla?' },
+      { sender: 'bot', text: 'El peso baja. Pero la creatina mejora tu rendimiento y puede favorecer el desarrollo muscular.\n\nLo mejor es registrar una nota en tus pesajes indicando que iniciaste creatina. Así el análisis DEMA interpreta el cambio correctamente. 📝' },
+    ],
+  },
+  estancamiento: {
+    label: '📊 Estancamiento',
+    labelEN: '📊 Plateau',
+    messages: [
+      { sender: 'user', text: 'Llevo 2 semanas sin bajar nada. Me quiero rendir 😔' },
+      { sender: 'bot', text: 'Dos semanas es un período relevante. Revisemos los datos antes de sacar conclusiones.' },
+      { sender: 'bot', text: 'Tu tendencia calculada en esas dos semanas es de **-0.05 kg/semana**. Eso es técnicamente un estancamiento.' },
+      { sender: 'user', text: '¿Entonces qué hago?' },
+      { sender: 'bot', text: 'Puede ser adaptación metabólica después de semanas de déficit, retención de agua que enmascara pérdida real, o un balance calórico más cercano a mantenimiento.\n\nTu coach fue notificado y tiene visibilidad. ¿Ha cambiado algo en tu alimentación, estrés o sueño estas últimas semanas?' },
+    ],
+  },
+  ejercicio: {
+    label: '🏋️ Post-Gym',
+    labelEN: '🏋️ Post-Gym',
+    messages: [
+      { sender: 'user', text: 'Ayer hice pierna pesada y hoy subí 700g, no tiene sentido' },
+      { sender: 'bot', text: 'Tiene todo el sentido. El entrenamiento de fuerza genera microlesiones musculares que tu cuerpo repara reteniendo fluidos en el tejido muscular. Es parte de la recuperación.' },
+      { sender: 'bot', text: 'Después de una sesión intensa, especialmente de piernas o espalda, es normal ver +0.3 a +1 kg en las siguientes 24-48 horas. **No es grasa.**' },
+      { sender: 'user', text: 'Ah ok entonces es normal 😅' },
+      { sender: 'bot', text: 'Totalmente. El efecto es más marcado cuando haces ejercicios nuevos o más volumen del habitual.\n\nTu DEMA sigue descendiendo: **-0.4 kg/semana**. El sistema funciona. 💯' },
+    ],
+  },
+};
+
 const CalibotDemo = () => {
   const { t, language } = useLanguage();
+  const [activeScenario, setActiveScenario] = useState('canchita');
   const [visibleMessages, setVisibleMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const containerRef = useRef(null);
 
-  // New realistic conversation about popcorn/sodium
-  const messagesES = [
-    { sender: 'user', text: 'Hola, ¿por qué subí 800g si solo comí canchita ayer? :(' },
-    { sender: 'bot', text: '¡Tranquilo! 😊 Esa variación es completamente normal. Las palomitas de maíz tienen alto contenido de sodio, lo que causa retención temporal de agua.' },
-    { sender: 'bot', text: 'No es grasa real. Tu cuerpo está reteniendo líquidos para equilibrar el sodio. Esto desaparecerá en 24-48 horas. 💧' },
-    { sender: 'bot', text: '¿Quieres que excluya este peso de la tendencia DEMA para que no afecte tu análisis real?' },
-    { sender: 'user', text: 'Sí, por favor' },
-    { sender: 'bot', text: '✅ Listo. Peso excluido del cálculo.\n\nTu tendencia real se mantiene perfecta: **-0.4 kg por semana**. Vas excelente según tu objetivo. 📉' }
-  ];
+  const messages = scenarios[activeScenario].messages;
 
-  const messagesEN = [
-    { sender: 'user', text: 'Hey, why did I gain 800g if I only had popcorn yesterday? :(' },
-    { sender: 'bot', text: "Don't worry! 😊 That variation is completely normal. Popcorn has high sodium content, which causes temporary water retention." },
-    { sender: 'bot', text: "It's not real fat. Your body is retaining fluids to balance the sodium. This will disappear in 24-48 hours. 💧" },
-    { sender: 'bot', text: 'Would you like me to exclude this weight from the DEMA trend so it doesn\'t affect your real analysis?' },
-    { sender: 'user', text: 'Yes, please' },
-    { sender: 'bot', text: '✅ Done. Weight excluded from calculation.\n\nYour real trend remains perfect: **-0.4 kg per week**. You\'re doing excellent according to your goal. 📉' }
-  ];
-
-  const messages = language === 'es' ? messagesES : messagesEN;
-
+  // Reset when scenario or language changes
   useEffect(() => {
-    // Reset when language changes
     setVisibleMessages([]);
     setCurrentMessageIndex(0);
     setIsTyping(false);
-  }, [language]);
+  }, [activeScenario, language]);
 
   useEffect(() => {
     if (currentMessageIndex >= messages.length) return;
 
     const message = messages[currentMessageIndex];
     const isBot = message.sender === 'bot';
-    const delay = isBot ? 1200 : 600;
+    const delay = currentMessageIndex === 0 ? 800 : (isBot ? 1200 : 600);
 
     const timer = setTimeout(() => {
       if (isBot) {
         setIsTyping(true);
         setTimeout(() => {
           setIsTyping(false);
-          setVisibleMessages(prev => [...prev, { ...message, id: currentMessageIndex }]);
+          setVisibleMessages(prev => [...prev, { ...message, id: `${activeScenario}-${currentMessageIndex}` }]);
           setCurrentMessageIndex(prev => prev + 1);
         }, 1000 + Math.random() * 500);
       } else {
-        setVisibleMessages(prev => [...prev, { ...message, id: currentMessageIndex }]);
+        setVisibleMessages(prev => [...prev, { ...message, id: `${activeScenario}-${currentMessageIndex}` }]);
         setCurrentMessageIndex(prev => prev + 1);
       }
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [currentMessageIndex, messages]);
+  }, [currentMessageIndex, messages, activeScenario]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -77,7 +130,6 @@ const CalibotDemo = () => {
   };
 
   const formatMessage = (text) => {
-    // Handle bold text with **
     return text.split('**').map((part, i) => 
       i % 2 === 1 ? <strong key={i} className="text-[#00D2FF]">{part}</strong> : part
     );
@@ -95,7 +147,7 @@ const CalibotDemo = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-12"
         >
           <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
             {t('calibot.title')}
@@ -103,6 +155,29 @@ const CalibotDemo = () => {
           <p className="text-white/60 text-lg max-w-2xl mx-auto">
             {t('calibot.subtitle')}
           </p>
+        </motion.div>
+
+        {/* Scenario Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="flex flex-wrap justify-center gap-2 mb-8"
+        >
+          {Object.entries(scenarios).map(([key, scenario]) => (
+            <button
+              key={key}
+              onClick={() => setActiveScenario(key)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                activeScenario === key
+                  ? 'bg-[#00D2FF] text-black shadow-[0_0_20px_rgba(0,210,255,0.4)]'
+                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              {language === 'es' ? scenario.label : scenario.labelEN}
+            </button>
+          ))}
         </motion.div>
 
         {/* Phone Mockup */}
@@ -185,21 +260,9 @@ const CalibotDemo = () => {
                       >
                         <div className="bg-[#1F2C33] px-4 py-3 rounded-lg rounded-bl-none border-l-2 border-[#00D2FF]">
                           <div className="flex items-center gap-1">
-                            <motion.div
-                              animate={{ opacity: [0.4, 1, 0.4] }}
-                              transition={{ duration: 0.8, repeat: Infinity }}
-                              className="w-2 h-2 bg-[#00D2FF] rounded-full"
-                            />
-                            <motion.div
-                              animate={{ opacity: [0.4, 1, 0.4] }}
-                              transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
-                              className="w-2 h-2 bg-[#00D2FF] rounded-full"
-                            />
-                            <motion.div
-                              animate={{ opacity: [0.4, 1, 0.4] }}
-                              transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
-                              className="w-2 h-2 bg-[#00D2FF] rounded-full"
-                            />
+                            <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 0.8, repeat: Infinity }} className="w-2 h-2 bg-[#00D2FF] rounded-full" />
+                            <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }} className="w-2 h-2 bg-[#00D2FF] rounded-full" />
+                            <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }} className="w-2 h-2 bg-[#00D2FF] rounded-full" />
                           </div>
                         </div>
                       </motion.div>
@@ -239,7 +302,7 @@ const CalibotDemo = () => {
           className="flex flex-wrap justify-center gap-3 mt-12"
         >
           {[
-            language === 'es' ? 'WhatsApp Integration' : 'WhatsApp Integration',
+            'WhatsApp Integration',
             language === 'es' ? 'Respuestas Instantáneas' : 'Instant Responses',
             language === 'es' ? 'Análisis DEMA' : 'DEMA Analysis',
             language === 'es' ? 'Sin Alarmas Falsas' : 'No False Alarms'
