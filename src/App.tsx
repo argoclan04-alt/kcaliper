@@ -18,8 +18,6 @@ import { LandingPage as LegacyLandingPage } from './components/LandingPage';
 import { EarlyAccessPage } from './components/EarlyAccessPage';
 import AppV2, { LandingPage as V2LandingPage, CoachesLandingPage as V2CoachesPage, NosotrosPage as V2NosotrosPage } from './v2/App';
 import { AuthPage } from './components/AuthPage';
-import { LoginPage } from './components/LoginPage';
-import { SignupPage } from './components/SignupPage';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
@@ -228,13 +226,13 @@ export default function App() {
     return <EarlyAccessPage onNavigate={handleNavigate} />;
   }
 
-  // RESTORED OLD LOGIN UI
+  // UNIFIED AUTH UI
   if (path === '/login' || path === '/auth') {
-    return <LoginPage onNavigate={handleNavigate} />;
+    return <AuthPage initialMode="login" />;
   }
 
   if (path === '/signup') {
-    return <SignupPage onNavigate={handleNavigate} />;
+    return <AuthPage initialMode="signup" />;
   }
 
   if (path === '/reset-password') {
