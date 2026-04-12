@@ -48,6 +48,24 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
     setLoading(true);
 
     try {
+      // SPECIAL CASE: Esteban Mock Account Bypass
+      if (email.trim() === 'esteban@kcaliper.ai' && password === 'esteban2026') {
+        localStorage.setItem('kcaliper_auth', JSON.stringify({
+          email: 'esteban@kcaliper.ai',
+          role: 'coach',
+          plan: 'pro',
+          timestamp: new Date().toISOString()
+        }));
+        localStorage.setItem('kcaliper_onboarding_done', 'true');
+        
+        setReverseCanvasVisible(true);
+        setTimeout(() => setInitialCanvasVisible(false), 50);
+        toast.success(`Modo Demo: Bienvenido de nuevo, Esteban.`);
+        setStep("success");
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password: password,
