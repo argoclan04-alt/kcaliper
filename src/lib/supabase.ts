@@ -1,18 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://vsbgqnevkpremfzvphir.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZzYmdxbmV2a3ByZW1menZwaGlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MDY2ODAsImV4cCI6MjA5MTA4MjY4MH0.Rbr2h86jF-npYDQGEfaM6j8xjuzaGndoLAwe5PefuXQ';
 
 // Verbose logging to help identify why Auth might fail in certain environments
-if (!supabaseUrl || !supabaseAnonKey || supabaseAnonKey === 'mock_key_to_prevent_client_crash') {
-  console.error('CRITICAL: Supabase credentials missing or invalid!');
-  console.warn('SI ESTÁS EN PRODUCCIÓN (VERCEL): Debes añadir VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en el Dashboard de Vercel.');
-  console.log('Environment Debug:', {
-    urlFound: !!supabaseUrl,
-    keyFound: !!supabaseAnonKey,
-    keyIsMock: supabaseAnonKey === 'mock_key_to_prevent_client_crash',
-    mode: import.meta.env.MODE
-  });
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.warn('Nota: Usando credenciales de respaldo (Fallback). Asegúrate de que el Re-deploy de Vercel termine para usar las del Dashboard.');
 }
 
 export const supabase = createClient(
