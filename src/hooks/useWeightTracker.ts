@@ -125,20 +125,21 @@ export function useWeightTracker() {
           });
         }
         
-        // 2.5 Load Coach's own weight entries (Personal Profile)
-        const { data: personalEntries } = await supabase
-          .from('weight_entries')
-          .select('*')
-          .eq('client_id', coachId)
-          .order('date', { ascending: false });
+        // 2.5 Load Coach's own weight entries + settings (Personal Profile)
+        const [{ data: personalEntries }, { data: coachSettings }] = await Promise.all([
+          supabase.from('weight_entries').select('*').eq('client_id', coachId).order('date', { ascending: false }),
+          supabase.from('client_settings').select('*').eq('id', coachId).maybeSingle()
+        ]);
 
         const selfData: Client = {
           id: coachId,
           name: profile.full_name || 'Coach',
           email: profile.email,
-          unit: 'kg',
-          country: '',
-          targetWeeklyRate: -0.5,
+          unit: coachSettings?.unit || 'kg',
+          country: coachSettings?.country || '',
+          targetWeeklyRate: coachSettings?.target_weekly_rate ?? -0.5,
+          milestone: coachSettings?.milestone,
+          milestoneAchieved: coachSettings?.milestone_achieved,
           weightEntries: (personalEntries || []).map((e: any) => ({
             id: e.id,
             date: e.date,
@@ -304,8 +305,15 @@ export function useWeightTracker() {
       };
       setCoach((prev: Coach | null) => {
         if (!prev) return prev;
+
+        const isSelf = clientId === prev.id;
+        const updatedSelf = isSelf 
+          ? { ...prev.self!, weightEntries: [newEntry, ...prev.self!.weightEntries] } 
+          : prev.self;
+
         return {
           ...prev,
+          self: updatedSelf,
           clients: prev.clients.map((c: Client) =>
             c.id === clientId
               ? { ...c, weightEntries: [newEntry, ...c.weightEntries] }
@@ -329,6 +337,9 @@ export function useWeightTracker() {
 
     if (error) {
       console.error('Error adding weight entry:', error);
+      toast.error(`Error al guardar: ${error.message}`);
+      setLoading(false);
+      return;
     } else {
       const { data: updatedClients } = await supabase.from('client_settings').select('*').eq('id', clientId).single(); // Just for context
       await refreshClientData(clientId);
@@ -347,8 +358,20 @@ export function useWeightTracker() {
     if (isMockMode.current) {
       setCoach((prev: Coach | null) => {
         if (!prev) return prev;
+        
+        const isSelf = clientId === prev.id;
+        const updatedSelf = isSelf
+          ? {
+              ...prev.self!,
+              weightEntries: prev.self!.weightEntries.map((e: WeightEntry) =>
+                e.id === entryId ? { ...e, ...updates } : e
+              ),
+            }
+          : prev.self;
+
         return {
           ...prev,
+          self: updatedSelf,
           clients: prev.clients.map((c: Client) =>
             c.id === clientId
               ? {
@@ -583,15 +606,18 @@ export function useWeightTracker() {
       });
 
       // Override the core coach profile with the real user's details if provided by an influencer signup
-      const finalCoachProfile = {
-         ...estebanCoach,
-         id: customEmail ? accountIdOrUserId : estebanCoach.id,
-         name: customFullName || estebanCoach.name,
-         email: customEmail || estebanCoach.email,
-         clients: clientsWithRates
+      const selfData: Client = {
+        id: customEmail ? accountIdOrUserId : estebanCoach.id,
+        name: customFullName || estebanCoach.name,
+        email: customEmail || estebanCoach.email,
+        unit: 'kg',
+        country: 'ES',
+        targetWeeklyRate: -0.5,
+        weightEntries: [],
+        createdAt: new Date().toISOString()
       };
 
-      setCoach(finalCoachProfile as any);
+      setCoach({ ...finalCoachProfile, self: selfData } as any);
       setAlerts(estebanAlerts);
 
       // Find user or construct dynamic one
@@ -609,7 +635,17 @@ export function useWeightTracker() {
       setCurrentUser(user as any);
     } else if (accountId === 'real-coach') {
       // Real-world coach demo (empty but functional)
-      setCoach({ id: accountIdOrUserId, name: 'Coach Kcaliper', clients: [] });
+      const selfData: Client = {
+        id: accountIdOrUserId,
+        name: 'Coach Kcaliper',
+        email: 'coach@kcaliper.ai',
+        unit: 'kg',
+        country: 'ES',
+        targetWeeklyRate: -0.5,
+        weightEntries: [],
+        createdAt: new Date().toISOString()
+      };
+      setCoach({ id: accountIdOrUserId, name: 'Coach Kcaliper', clients: [], self: selfData });
       setAlerts([]);
       setCurrentUser({
         id: accountIdOrUserId,
@@ -637,7 +673,18 @@ export function useWeightTracker() {
         weightEntries: recalculateAllWeeklyRates(client.weightEntries)
       }));
 
-      setCoach({ ...mockCoach, clients: clientsWithRatesFinal } as any);
+      const selfData: Client = {
+        id: selectedMockUser.id,
+        name: selectedMockUser.name,
+        email: selectedMockUser.email,
+        unit: 'kg',
+        country: 'ES',
+        targetWeeklyRate: -0.5,
+        weightEntries: [],
+        createdAt: new Date().toISOString()
+      };
+
+      setCoach({ ...mockCoach, clients: clientsWithRatesFinal, self: selfData } as any);
       setAlerts(mockAlerts);
       setCurrentUser(selectedMockUser as any);
     }

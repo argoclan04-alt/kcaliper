@@ -50,24 +50,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
     try {
       const emailLower = email.trim().toLowerCase();
       
-      // MASTER CREDENTIALS BYPASS (As requested by user)
-      if (emailLower === 'atleta@kcaliper.ai' && password === 'atleta') {
-        localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'athlete', plan: 'pro', timestamp: new Date().toISOString() }));
-        localStorage.setItem('kcaliper_account', 'real-athlete');
-        localStorage.removeItem('kcaliper_onboarding_done');
-        setStep("success");
-        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
-        return;
-      }
-      
-      if (emailLower === 'coach@kcaliper.ai' && password === 'coach') {
-        localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'coach', plan: 'pro', timestamp: new Date().toISOString() }));
-        localStorage.setItem('kcaliper_account', 'real-coach');
-        setStep("success");
-        setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
-        return;
-      }
-      
+      // ADMIN BYPASS (kept for quick access to /admin panel)
       if ((emailLower === 'admin@kcaliper.ai' || emailLower === 'contacto@kcaliper.com') && password === 'Tenkaichi23') {
         localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'super_admin', plan: 'pro', timestamp: new Date().toISOString() }));
         setStep("success");
