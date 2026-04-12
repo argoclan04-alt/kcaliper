@@ -302,10 +302,15 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.profiles (id, full_name, email, role)
-  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.email, (new.raw_user_meta_data->>'role')::user_role);
+  VALUES (
+    new.id, 
+    COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)), 
+    new.email, 
+    COALESCE((new.raw_user_meta_data->>'role')::user_role, 'client'::user_role)
+  );
   
   -- If client, link to initial settings
-  IF (new.raw_user_meta_data->>'role') = 'client' THEN
+  IF COALESCE(new.raw_user_meta_data->>'role', 'client') = 'client' THEN
     INSERT INTO public.client_settings (id, coach_id)
     VALUES (new.id, (new.raw_user_meta_data->>'coach_id')::UUID);
   END IF;

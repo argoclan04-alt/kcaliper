@@ -56,44 +56,27 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
 
     setLoading(true);
 
-    // SPECIAL CASE: Test Account Bypass
-    const isTestAccount = email.trim() === 'coach@kcaliper.ai' || email.trim() === 'atleta@kcaliper.ai';
-
     try {
-      let data, error;
-      
-      if (isTestAccount) {
-        // Mock successful signup response
-        data = { user: { id: `mock-uuid-${Date.now()}` } };
-        error = null;
-        // Also set persistent auth state like a real login
-        localStorage.setItem('kcaliper_auth', JSON.stringify({
-          email: email.trim(),
-          role: role === 'coach' ? 'coach' : 'athlete',
-          plan: 'pro',
-          timestamp: new Date().toISOString()
-        }));
-      } else {
-        const result = await supabase.auth.signUp({
-          email: email.trim(),
-          password: password,
-          options: {
-            data: {
-              role: role === 'coach' ? 'coach' : 'client',
-              full_name: email.split('@')[0],
-            }
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password: password,
+        options: {
+          data: {
+            role: role === 'coach' ? 'coach' : 'client',
+            full_name: email.split('@')[0],
           }
-        });
-        data = result.data;
-        error = result.error;
-      }
+        }
+      });
 
       if (error) throw error;
 
       if (data?.user) {
+        // Handle cases where email confirmation is required (session might be null)
+        const isConfirmed = !!data.session;
+        
         // SYNC PENDING WEIGHT FROM ONBOARDING
         const pendingWeight = localStorage.getItem('kcaliper_pending_weight');
-        if (pendingWeight) {
+        if (pendingWeight && isConfirmed) {
           try {
             const parsed = JSON.parse(pendingWeight);
             await supabase.from('weight_entries').insert({
@@ -104,27 +87,33 @@ export function SignupPage({ onNavigate }: SignupPageProps) {
               recorded_by: 'client'
             });
             localStorage.removeItem('kcaliper_pending_weight');
-            console.log("Sincronización de peso completada.");
           } catch (e) {
-            console.error("Error syncing pending weight:", e);
+            console.error("Error syncing weight:", e);
           }
         }
 
-        // Trigger canvas transition
+        if (!isConfirmed) {
+          toast.success("Cuenta creada. Por favor, confirma tu email para continuar.");
+          setLoading(false);
+          // Optional: redirect to login or show notice
+          return;
+        }
+
+        // Trigger canvas transition for confirmed users
         setReverseCanvasVisible(true);
         setTimeout(() => setInitialCanvasVisible(false), 50);
 
         toast.success("¡Cuenta creada exitosamente!");
         setStep("success");
         
-        // Construct Stripe URL with prefilled email
         const baseUrl = role === 'coach' ? STRIPE_COACH : STRIPE_ATHLETE;
         const redirectUrl = `${baseUrl}?prefilled_email=${encodeURIComponent(email.trim())}`;
         
-        // Automatic redirection after success animation
-        setTimeout(() => {
-          window.location.href = redirectUrl;
-        }, 2000);
+        setTimeout(() => { window.location.href = redirectUrl; }, 2000);
+      } else {
+        // Fallback for unexpected null data
+        setLoading(false);
+        toast.error("El servidor no devolvió una respuesta válida. Inténtalo de nuevo.");
       }
     } catch (error: any) {
       toast.error(error.message || 'Error al crear la cuenta.');

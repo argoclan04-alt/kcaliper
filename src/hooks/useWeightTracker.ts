@@ -48,14 +48,14 @@ export function useWeightTracker() {
         return;
       }
       
-      // CHECK IF ACCOUNT IS AN INFLUENCER OR DEMO (Seeds the mock data)
+      // 1.5 CHECK IF ACCOUNT IS AN INFLUENCER (Only seed if explicitly in influencers table)
       const { data: influencer } = await supabase
         .from('influencers')
         .select('email')
         .eq('email', profile.email)
         .maybeSingle();
 
-      const isInfluencer = !!influencer || profile.email.includes('esteban@');
+      const isInfluencer = !!influencer;
 
       if (isInfluencer) {
         console.log("Influencer Account Detected! Seeding Mock Data...");

@@ -111,29 +111,19 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
         password: password,
       });
 
-      if (error) {
-         // Specialized error handling for common issues
-         if (error.message.includes('Invalid login credentials')) {
-            throw new Error('Email o contraseña incorrectos. Verifica tus datos.');
-         }
-         throw error;
-      };
+      if (error) throw error;
 
-      if (data?.user) {
-        // Trigger canvas transition
+      if (data.session) {
+        // Redirection logic stays here
         setReverseCanvasVisible(true);
         setTimeout(() => setInitialCanvasVisible(false), 50);
-
-        toast.success(`Acceso concedido. Bienvenido de nuevo.`);
-        setStep("success");
         
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1500);
+        toast.success(`¡Bienvenido de nuevo!`);
+        setStep("success");
+        setTimeout(() => { window.location.href = '/dashboard'; }, 1500);
       }
     } catch (error: any) {
       toast.error(error.message || 'Error al iniciar sesión.');
-      console.error('Login Error details:', error);
       setLoading(false);
     }
   };
