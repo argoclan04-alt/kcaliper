@@ -91,8 +91,12 @@ serve(async (req: Request) => {
       status: 200,
     });
   } catch (error: any) {
-    console.error("SMTP Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("Critical SMTP/Handler Error:", error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      detail: error.stack,
+      hint: "Check SMTP_PASS and SMTP_HOST environments if this is an authentication error."
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
     });

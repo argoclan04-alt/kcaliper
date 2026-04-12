@@ -125,8 +125,44 @@ export function useWeightTracker() {
           });
         }
         
-        setCoach({ id: coachId, name: profile.full_name || 'Coach', clients: formattedClients });
-        
+        // 2.5 Load Coach's own weight entries (Personal Profile)
+        const { data: personalEntries } = await supabase
+          .from('weight_entries')
+          .select('*')
+          .eq('client_id', coachId)
+          .order('date', { ascending: false });
+
+        const selfData: Client = {
+          id: coachId,
+          name: profile.full_name || 'Coach',
+          email: profile.email,
+          unit: 'kg',
+          country: '',
+          targetWeeklyRate: -0.5,
+          weightEntries: (personalEntries || []).map((e: any) => ({
+            id: e.id,
+            date: e.date,
+            weight: Number(e.weight),
+            notes: e.notes,
+            recordedBy: e.recorded_by,
+            movingAverage: Number(e.moving_average),
+            weeklyRate: Number(e.weekly_rate),
+            excludeFromCalculations: e.exclude_from_calculations,
+            isLowest: e.is_lowest,
+            isHighest: e.is_highest,
+            nutritionId: e.active_nutrition_id
+          })),
+          createdAt: profile.created_at || new Date().toISOString()
+        };
+
+        setCoach({ 
+          id: coachId, 
+          name: profile.full_name || 'Coach', 
+          email: profile.email,
+          clients: formattedClients,
+          self: selfData
+        });
+
         const { data: alertsData } = await supabase.from('alerts').select('*').eq('coach_id', coachId).order('date', { ascending: false });
         if (alertsData) setAlerts(alertsData as Alert[]);
 
@@ -350,25 +386,30 @@ export function useWeightTracker() {
     if (updatedEntries) {
       setCoach((prev: Coach | null) => {
         if (!prev) return prev;
+        
+        const mappedEntries = updatedEntries.map((e: any) => ({
+          id: e.id,
+          date: e.date,
+          weight: Number(e.weight),
+          notes: e.notes,
+          recordedBy: e.recorded_by,
+          movingAverage: Number(e.moving_average),
+          weeklyRate: Number(e.weekly_rate),
+          excludeFromCalculations: e.exclude_from_calculations,
+          isLowest: e.is_lowest,
+          isHighest: e.is_highest,
+          nutritionId: e.active_nutrition_id
+        }));
+
+        // If this is the coach's own ID, update 'self'
+        const isSelf = clientId === prev.id;
+        const updatedSelf = isSelf ? { ...prev.self!, weightEntries: mappedEntries } : prev.self;
+
         return {
           ...prev,
+          self: updatedSelf,
           clients: prev.clients.map((c: Client) => 
-            c.id === clientId ? { 
-              ...c, 
-              weightEntries: updatedEntries.map((e: any) => ({
-                id: e.id,
-                date: e.date,
-                weight: Number(e.weight),
-                notes: e.notes,
-                recordedBy: e.recorded_by,
-                movingAverage: Number(e.moving_average),
-                weeklyRate: Number(e.weekly_rate),
-                excludeFromCalculations: e.exclude_from_calculations,
-                isLowest: e.is_lowest,
-                isHighest: e.is_highest,
-                nutritionId: e.active_nutrition_id
-              }))
-            } : c
+            c.id === clientId ? { ...c, weightEntries: mappedEntries } : c
           )
         };
       });

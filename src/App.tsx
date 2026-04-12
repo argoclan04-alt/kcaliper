@@ -181,6 +181,13 @@ export default function App() {
     }
   };
 
+  const handleAddPersonalWeight = (weight: number, date: string, notes: string) => {
+    if (currentUser) {
+      addWeightEntry(currentUser.id, { weight, date, notes, recordedBy: 'coach' });
+      toast.success('Peso personal registrado con éxito!');
+    }
+  };
+
   const handleUpdateEntry = (clientId: string, entryId: string, updates: any) => {
     updateWeightEntry(clientId, entryId, updates);
     toast.success('Entry updated successfully!');
@@ -281,6 +288,7 @@ export default function App() {
               coach={coach}
               alerts={alerts}
               unreadAlerts={unreadAlerts}
+              onAddPersonalWeight={handleAddPersonalWeight}
               onUpdateEntry={handleUpdateEntry}
               onMarkLowest={markLowestWeight}
               onMarkHighest={markHighestWeight}

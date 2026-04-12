@@ -37,10 +37,14 @@ const CLIENT_COLOR_PALETTE = [
 const getClientColor = (index: number) => CLIENT_COLOR_PALETTE[index % CLIENT_COLOR_PALETTE.length];
 import { toast, Toaster } from 'sonner';
 
+import { CoachPersonalProfile } from './CoachPersonalProfile';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+
 interface CoachDashboardProps {
   coach: Coach;
   alerts: any[];
   unreadAlerts: any[];
+  onAddPersonalWeight?: (weight: number, date: string, notes: string) => void;
   onUpdateEntry: (clientId: string, entryId: string, updates: any) => void;
   onMarkLowest: (clientId: string, entryId: string) => void;
   onMarkHighest: (clientId: string, entryId: string) => void;
@@ -54,6 +58,7 @@ export function CoachDashboard({
   coach,
   alerts,
   unreadAlerts,
+  onAddPersonalWeight,
   onUpdateEntry,
   onUpdateTargetRate,
   onMarkAlertAsRead,
@@ -216,23 +221,36 @@ export function CoachDashboard({
 
   return (
     <div className="space-y-6 sm:space-y-6">
-      {/* Desktop Header - Hidden on mobile */}
-      <div className="hidden sm:flex justify-end items-center gap-3">
-        <InviteClientDialog coachId={coach.id} coachName={coach.name} />
-        <Button variant="outline" size="sm" className="gap-2 h-12 px-6 rounded-full border-white/10 bg-white/5 hover:bg-white/10" onClick={() => setTrainingModulesOpen(true)}>
-          <PlayCircle className="w-4 h-4" />
-          Módulos de Entrenamiento
-        </Button>
-      </div>
+      <Tabs defaultValue="clients" className="w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <TabsList className="bg-black/20 border-white/5 p-1 rounded-2xl h-14 w-full sm:w-auto">
+            <TabsTrigger value="clients" className="px-6 rounded-xl data-[state=active]:bg-[#00D2FF] data-[state=active]:text-black text-white/50 font-black italic uppercase tracking-tight h-full">
+              Mis Clientes
+            </TabsTrigger>
+            <TabsTrigger value="personal" className="px-6 rounded-xl data-[state=active]:bg-[#00D2FF] data-[state=active]:text-black text-white/50 font-black italic uppercase tracking-tight h-full">
+              Mi Perfil
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Main Layout: Clients Overview (Left) + Alerts (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 sm:gap-6">
-        {/* Clients Overview - Full width on mobile, 2/3 on desktop */}
-        <div className="lg:col-span-2">
-          <Card className="border-0 sm:border shadow-none sm:shadow-sm dark:bg-gray-900 dark:border-gray-800">
-            <CardHeader className="hidden sm:block pb-3">
-              <CardTitle className="dark:text-white">Resumen de Clientes</CardTitle>
-            </CardHeader>
+          {/* Combined Header actions */}
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <InviteClientDialog coachId={coach.id} coachName={coach.name} />
+            <Button variant="outline" size="sm" className="hidden sm:flex gap-2 h-12 px-6 rounded-full border-white/10 bg-white/5 hover:bg-white/10" onClick={() => setTrainingModulesOpen(true)}>
+              <PlayCircle className="w-4 h-4" />
+              Módulos
+            </Button>
+          </div>
+        </div>
+
+        <TabsContent value="clients" className="mt-0">
+          {/* Main Layout: Clients Overview (Left) + Alerts (Right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 sm:gap-6">
+            {/* Clients Overview - Full width on mobile, 2/3 on desktop */}
+            <div className="lg:col-span-2">
+              <Card className="border-0 sm:border shadow-none sm:shadow-sm dark:bg-gray-900 dark:border-gray-800">
+                <CardHeader className="hidden sm:block pb-3">
+                  <CardTitle className="dark:text-white">Resumen de Clientes</CardTitle>
+                </CardHeader>
             <CardContent className="p-0 sm:p-6">
               <div className="grid gap-0 sm:gap-2">
                 {coach.clients.map((client, clientIndex) => {
@@ -402,8 +420,20 @@ export function CoachDashboard({
             onMarkAsRead={onMarkAlertAsRead}
             onViewClient={handleViewClient}
           />
-        </div>
-      </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="personal" className="mt-0">
+          {coach.self && (
+            <CoachPersonalProfile 
+              profile={coach.self}
+              onAddEntry={onAddPersonalWeight || (() => {})}
+              onUpdateEntry={(entryId, updates) => onUpdateEntry(coach.id, entryId, updates)}
+              loading={false}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Settings Dialog - Shared between mobile and desktop */}
       {selectedClient && settingsDialogOpen && (

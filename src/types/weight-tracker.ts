@@ -75,6 +75,7 @@ export interface Coach {
   name: string;
   email: string;
   clients: Client[];
+  self?: Client; // Personal profile for the coach
 }
 
 export interface Alert {
