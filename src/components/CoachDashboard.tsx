@@ -421,6 +421,7 @@ export function CoachDashboard({
             onViewClient={handleViewClient}
           />
           </div>
+        </div>
         </TabsContent>
 
         <TabsContent value="personal" className="mt-0">
