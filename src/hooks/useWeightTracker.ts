@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Client, Coach, WeightEntry, Alert, User, NutritionData, ClientNotification } from '../types/weight-tracker';
 import { supabase } from '../lib/supabase';
 import { toast } from 'sonner';
-import { mockUsers } from '../utils/mock-data';
+import { mockUsers, mockCoach, mockAlerts } from '../utils/mock-data';
 import { estebanCoach, estebanAlerts, estebanUsers } from '../utils/mock-data-esteban';
 
 // Helper for UI-friendly IDs and formatting preserved from calculations
@@ -564,15 +564,9 @@ export function useWeightTracker() {
       }
       setCurrentUser(user as any);
     } else {
-      // Default: load Carlos / Argo data
-      const selectedMockUser = mockUsers.find(u => u.id === accountIdOrUserId) || mockUsers[0];
-
-      const clientsWithRates = (mockUsers.length > 0 ? [mockUsers[0]] : []).map(u => ({
-         // This is a bit simplified, usually mockCoach has clients
-      }));
-
-      // Importing mockCoach from mock-data
-      const { mockCoach, mockAlerts } = await import('../utils/mock-data');
+      // Default: load Carlos / Carlos Rodriguez / Argo data
+      const accountId = localStorage.getItem('kcaliper_account') || 'argo';
+      const selectedMockUser = mockUsers.find(u => u.id === accountId) || mockUsers[0];
 
       const clientsWithRatesFinal = mockCoach.clients.map(client => ({
         ...client,

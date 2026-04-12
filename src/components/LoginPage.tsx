@@ -56,6 +56,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
           plan: 'pro',
           timestamp: new Date().toISOString()
         }));
+        localStorage.setItem('kcaliper_account', 'esteban'); // CRITICAL: Signal which data to load
         localStorage.setItem('kcaliper_onboarding_done', 'true');
         
         setReverseCanvasVisible(true);
