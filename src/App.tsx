@@ -248,11 +248,21 @@ export default function App() {
 
   // Dashboard (authenticated app)
   if (path === '/dashboard') {
+    // No auth token at all → go to login
     if (typeof window !== 'undefined' && !localStorage.getItem('kcaliper_auth')) {
-      // Small delay to allow react to render before replacing state
-      setTimeout(() => {
-        navigate('/login');
-      }, 0);
+      navigate('/login');
+      return <SplashScreen />;
+    }
+
+    // Still loading data → show splash (timeout in useWeightTracker will rescue this)
+    if (!currentUser && loading) {
+      return <SplashScreen />;
+    }
+
+    // Loading finished but no user found → broken state, redirect to login
+    if (!currentUser && !loading) {
+      console.warn('kCaliper: No user found after loading. Redirecting to login.');
+      navigate('/login');
       return <SplashScreen />;
     }
 

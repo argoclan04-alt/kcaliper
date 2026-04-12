@@ -20,6 +20,16 @@ export function useWeightTracker() {
 
   // Load real data from Supabase on mount
   useEffect(() => {
+    // Safety exit: If data takes more than 5 seconds, force-stop loading
+    const safetyTimeout = setTimeout(() => {
+      setLoading(prev => {
+        if (prev) {
+          console.warn("kCaliper: Safety timeout (5s) — forcing load complete.");
+        }
+        return false;
+      });
+    }, 5000);
+
     async function loadInitialData() {
       try {
         setLoading(true);
@@ -237,6 +247,8 @@ export function useWeightTracker() {
     }
 
     loadInitialData();
+
+    return () => clearTimeout(safetyTimeout);
   }, []);
 
   // Real-time subscriptions

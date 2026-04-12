@@ -47,9 +47,36 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       
       // ADMIN BYPASS
       if ((emailLower === 'admin@kcaliper.ai' || emailLower === 'contacto@kcaliper.com') && password === 'Tenkaichi23') {
+        await supabase.auth.signOut();
         localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'super_admin', plan: 'pro', timestamp: new Date().toISOString() }));
         setStep("success");
         setTimeout(() => { window.location.href = '/admin'; }, 800);
+        return;
+      }
+
+      // COACH DEMO — Esteban mock data (simulated dashboard with full clients)
+      if (emailLower === 'coach@kcaliper.ai' && password === 'coach') {
+        await supabase.auth.signOut();
+        localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'coach', plan: 'pro', timestamp: new Date().toISOString() }));
+        localStorage.setItem('kcaliper_account', 'esteban');
+        setReverseCanvasVisible(true);
+        setTimeout(() => setInitialCanvasVisible(false), 50);
+        toast.success('Bienvenido, Coach.');
+        setStep("success");
+        setTimeout(() => { window.location.href = '/dashboard'; }, 800);
+        return;
+      }
+
+      // ATLETA DEMO — Esteban mock data (athlete view)
+      if (emailLower === 'atleta@kcaliper.ai' && password === 'atleta') {
+        await supabase.auth.signOut();
+        localStorage.setItem('kcaliper_auth', JSON.stringify({ email: emailLower, role: 'client', plan: 'pro', timestamp: new Date().toISOString() }));
+        localStorage.setItem('kcaliper_account', 'esteban');
+        setReverseCanvasVisible(true);
+        setTimeout(() => setInitialCanvasVisible(false), 50);
+        toast.success('Bienvenido, Atleta.');
+        setStep("success");
+        setTimeout(() => { window.location.href = '/dashboard'; }, 800);
         return;
       }
 
