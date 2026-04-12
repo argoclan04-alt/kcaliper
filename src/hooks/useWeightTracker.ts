@@ -649,7 +649,7 @@ export function useWeightTracker() {
         createdAt: new Date().toISOString()
       };
 
-      setCoach({ ...finalCoachProfile, self: selfData } as any);
+      setCoach({ ...estebanCoach, clients: clientsWithRates, self: selfData } as any);
       setAlerts(estebanAlerts);
 
       // Find user or construct dynamic one
