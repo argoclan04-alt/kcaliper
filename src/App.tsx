@@ -18,6 +18,7 @@ import { LandingPage as LegacyLandingPage } from './components/LandingPage';
 import { EarlyAccessPage } from './components/EarlyAccessPage';
 import AppV2, { LandingPage as V2LandingPage, CoachesLandingPage as V2CoachesPage, NosotrosPage as V2NosotrosPage } from './v2/App';
 import { AuthPage } from './components/AuthPage';
+import { LoginPage } from './components/LoginPage';
 import { supabase } from './lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
