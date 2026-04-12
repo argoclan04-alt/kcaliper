@@ -615,7 +615,7 @@ export const estebanClients: Client[] = [
 export const estebanCoach: Coach = {
   id: 'coach-esteban',
   name: 'Esteban Alban',
-  email: 'esteban@kcaliper.com',
+  email: 'esteban@kcaliper.ai',
   clients: estebanClients
 };
 
@@ -755,7 +755,7 @@ export const estebanUsers: User[] = [
   {
     id: 'coach-esteban',
     name: 'Esteban Alban',
-    email: 'esteban@kcaliper.com',
+    email: 'esteban@kcaliper.ai',
     role: 'coach'
   },
   {
